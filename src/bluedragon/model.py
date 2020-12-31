@@ -1,7 +1,6 @@
 import enum
 import numpy as np
-from typing import NamedTuple, Union, Optional, List
-from random import shuffle, randint, choice
+from typing import NamedTuple, Union, Optional, List, Set
 from dataclasses import dataclass
 
 ROW = 5
@@ -16,6 +15,10 @@ class Pos(NamedTuple):
 
     def code(self) -> str:
         return chr(ord('A') + self.row) + str(self.col + 1)
+
+
+def is_within_area(p: Pos) -> bool:
+    return (p.row in range(0, ROW)) and (p.col in range(0, COL))
 
 
 class Response(enum.Enum):
@@ -134,3 +137,34 @@ class BattleData:
 
     def has_game_finished(self) -> bool:
         return self.my_alive_count <= 0 or self.opponent_alive_count <= 0
+
+    def listup_my_attackable_cells(self) -> Set[Pos]:
+        """
+        自軍が攻撃可能なマスを列挙して set として返す。
+        """
+        attackable_cells: Set[Pos] = set()
+        submarine_poses = self.listup_my_submarine_positions()
+
+        # 各潜水艦の周囲8マスを集合に追加 (dy=dx=0 の場合も追加してしまうけど後で取り除くのでOK)
+        for p in submarine_poses:
+            for dy in [-1, 0, +1]:
+                for dx in [-1, 0, +1]:
+                    attack_to = Pos(row=p.row + dy, col=p.col + dx)
+                    if is_within_area(attack_to):
+                        attackable_cells.add(attack_to)
+
+        # 自軍の潜水艦マスには攻撃できないので除く
+        return attackable_cells.difference(set(submarine_poses))
+
+    def listup_my_movable_cells(self, from_pos: Pos) -> Set[Pos]:
+        """
+        指定した位置から移動可能なマスを列挙する。
+        """
+        assert self.my_grid[from_pos.row, from_pos.col] > 0
+        movable_cells: Set[Pos] = set()
+        for d in [-2, -1, +1, +2]:
+            for dy, dx in [(d, 0), (0, d)]:
+                to = Pos(row=from_pos.row + dy, col=from_pos.col + dx)
+                if is_within_area(to):
+                    movable_cells.add(to)
+        return movable_cells
