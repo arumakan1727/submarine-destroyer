@@ -1,4 +1,4 @@
-from typing import NamedTuple, List, Set
+from typing import NamedTuple, Set
 
 ROW = 5
 COL = 5
