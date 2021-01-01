@@ -42,3 +42,13 @@ def listup_around_cells(center_pos: Pos) -> Set[Pos]:
     )
 
     return around_cells
+
+
+def all_cell_set() -> Set[Pos]:
+    """
+    全マスそれぞれの位置を集合として返す。
+    """
+    return set(
+        Pos(y, x)
+        for y in range(0, ROW) for x in range(0, COL)
+    )
