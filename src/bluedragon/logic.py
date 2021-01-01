@@ -12,6 +12,15 @@ def apply_my_op(data: BattleData, op_info: OpInfo) -> None:
     """
     data.my_history.append(op_info)
 
+    if op_info.is_move():
+        row, col = op_info.detail.fromPos
+        dirY = op_info.detail.dirY
+        dirX = op_info.detail.dirX
+        assert data.my_grid[row, col] > 0
+        assert data.my_grid[row + dirY, col + dirX] == 0
+        data.my_grid[row + dirY, col + dirX] = data.my_grid[row, col]
+        data.my_grid[row, col] = 0
+
 
 def apply_attack_response(data: BattleData, resp: Response) -> None:
     """
