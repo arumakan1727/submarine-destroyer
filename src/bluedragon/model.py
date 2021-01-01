@@ -17,7 +17,7 @@ class Response(enum.Enum):
 
 @dataclass
 class AttackInfo:
-    pos: Pos
+    attack_pos: Pos
     resp: Optional[Response] = None
 
 
@@ -58,7 +58,7 @@ class OpInfo(NamedTuple):
 
     def __str__(self) -> str:
         if self.is_attack():
-            return "Attack(to: %s)" % self.detail.pos.code()
+            return "Attack(to: %s)" % self.detail.attack_pos.code()
 
         if self.is_move():
             info = self.detail

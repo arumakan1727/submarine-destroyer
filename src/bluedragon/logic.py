@@ -52,7 +52,7 @@ def suggest_my_op(data: BattleData) -> OpInfo:
     対戦データをもとに自軍の操作を提案して返す。
     この関数は data に一切書込をしない。
     """
-    return OpInfo(AttackInfo(Pos(3, 5)))
+    return OpInfo(AttackInfo(attack_pos=Pos(3, 5)))
 
 
 def initialize_my_placement(data: BattleData) -> None:

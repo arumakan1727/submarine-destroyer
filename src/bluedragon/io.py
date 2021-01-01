@@ -123,7 +123,7 @@ def read_cell_code(message: str) -> Pos:
 
 def read_attack_info():
     p = read_cell_code("Opponent's attack target cell (ex: `E2`): ")
-    return OpInfo(AttackInfo(pos=p))
+    return OpInfo(AttackInfo(attack_pos=p))
 
 
 def read_move_info() -> OpInfo:
