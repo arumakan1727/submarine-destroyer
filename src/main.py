@@ -33,7 +33,12 @@ def main():
         # 敵軍の操作を入力, 表示, battle_data に反映
         op = io.read_opponent_op()
         io.info(op)
-        logic.apply_opponent_op(battle_data, op)
+        resp_from_me = logic.apply_opponent_op(battle_data, op)
+
+        # 敵軍が攻撃したならそれに対する自軍の反応を表示
+        if op.is_attack():
+            assert resp_from_me is not None
+            io.info("The response against opponent's attack is: " + str(resp_from_me))
 
     # 現在が自軍のターンなら True。 ループ毎にトグルする。
     is_current_my_turn = is_me_first

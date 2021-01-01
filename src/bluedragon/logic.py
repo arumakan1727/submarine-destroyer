@@ -39,13 +39,31 @@ def apply_attack_response(data: BattleData, resp: Response) -> None:
         data.opponent_alive_count -= 1
 
 
-def apply_opponent_op(data: BattleData, op_info: OpInfo) -> None:
+def apply_opponent_op(data: BattleData, op: OpInfo) -> Optional[Response]:
     """
     敵軍の操作を data に適用する
     """
-    data.opponent_history.append(op_info)
+    data.opponent_history.append(op)
 
-    # TODO data.potential の更新
+    if op.is_attack():
+        ay, ax = op.detail.attack_pos
+
+        # 敵が攻撃した位置に自軍が存在していたなら、 HP を減算して Hit または Dead の適切な方を返す。
+        if data.my_grid[ay, ax] > 0:
+            data.my_grid[ay, ax] -= 1
+            if data.my_grid[ay, ax] <= 0:
+                return Response.Dead
+            else:
+                return Response.Hit
+        # 敵が攻撃した位置の周囲に自軍が一隻以上存在していたなら Near。
+        elif any(data.my_grid[i, j] > 0 for i, j in listup_around_cells(Pos(ay, ax))):
+            return Response.Near
+        # 反応なし。
+        else:
+            return Response.Nothing
+
+    elif op.is_move():
+        return None
 
 
 def suggest_my_op(data: BattleData) -> OpInfo:
