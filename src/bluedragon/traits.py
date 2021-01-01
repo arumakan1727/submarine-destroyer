@@ -1,4 +1,4 @@
-from typing import NamedTuple, List
+from typing import NamedTuple, List, Set
 
 ROW = 5
 COL = 5
@@ -27,18 +27,18 @@ def is_within_area(p: Pos) -> bool:
     return (p.row in range(0, ROW)) and (p.col in range(0, COL))
 
 
-def listup_around_cells(center_pos: Pos) -> List[Pos]:
+def listup_around_cells(center_pos: Pos) -> Set[Pos]:
     """
-    center_pos の上下左右斜め1マスのマス位置を list として返す。
+    center_pos の上下左右斜め1マスのマス位置を set として返す。
     領域外のマスは除く。
     すなわち y not in [0, ROW) || x not in [0, COL) であるような (y, x) は list に含めない。
     center_pos は list に含めない。
     """
 
-    around_cells = [
+    around_cells = set(
         Pos(center_pos.row + dy, center_pos.col + dx)
         for dy in [-1, 0, +1] for dx in [-1, 0, +1]
         if (dy, dx) != (0, 0) and is_within_area(Pos(center_pos.row + dy, center_pos.col + dx))
-    ]
+    )
 
     return around_cells
