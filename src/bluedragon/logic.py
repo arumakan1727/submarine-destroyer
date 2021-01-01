@@ -5,10 +5,10 @@ from typing import List, Optional, Set
 import numpy as np
 
 from . import io
-from .model import OpInfo, AttackInfo, Response, BattleData
+from .model import OpInfo, AttackInfo, Response, BattleData, MoveInfo
 from .traits import Pos
 from .traits import ROW, COL, INITIAL_HP, INITIAL_SUBMARINE_COUNT
-from .traits import set_of_around_cells, all_cell_set
+from .traits import set_of_around_cells, all_cell_set, is_within_area
 
 
 def apply_my_op(data: BattleData, op_info: OpInfo) -> None:
@@ -251,3 +251,36 @@ def _update_prob_for_my_attack_nothing(prob: np.ndarray, attacked_pos: Pos) -> N
 
     destinations = all_cell_set() - nothing_area - _set_of_zero_union_greater_eq_one(prob)
     _distribute_prob(prob, s, destinations)
+
+
+def _update_prob_for_opponent_attack(prob: np.ndarray, attacked_pos: Pos, opponent_alive_count: int) -> None:
+    """
+    敵が attacked_pos に攻撃した場合の確率グリッド更新処理。
+    """
+    return _update_prob_for_my_attack_near(prob, attacked_pos, opponent_alive_count)
+
+
+def _update_prob_for_opponent_move(prob: np.ndarray, moving_info: MoveInfo) -> None:
+    """
+    敵が移動した場合の確率グリッド更新処理。
+    各マスの確率値を少し移動させる。 確率値が0や1のマスに対して特別処理を行うことはしない。
+    """
+    dirX = moving_info.dirY
+    dirY = moving_info.dirX
+    from_cells = [
+        Pos(y, x)
+        for y in range(ROW) for x in range(COL)
+        if is_within_area(Pos(y + dirY, x + dirX))
+    ]
+    prob_sum = sum(prob[y, x] for y, x in from_cells)
+
+    # 移動させた分の確率値の一時的な保存場所。
+    # for文で確率値の数割を移動先へ加算したあと、その加算した値ををさらに移動させると確率が壊れるため)
+    a = np.zeros((ROW, COL), dtype=np.float64)
+
+    for y, x in from_cells:
+        v = prob[y, x] * (1 / prob_sum)
+        prob[y, x] -= v
+        a[y + dirY, x + dirX] = v
+
+    prob += a
