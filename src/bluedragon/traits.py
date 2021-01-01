@@ -27,7 +27,7 @@ def is_within_area(p: Pos) -> bool:
     return (p.row in range(0, ROW)) and (p.col in range(0, COL))
 
 
-def listup_around_cells(center_pos: Pos) -> Set[Pos]:
+def set_of_around_cells(center_pos: Pos) -> Set[Pos]:
     """
     center_pos の上下左右斜め1マスのマス位置を set として返す。
     領域外のマスは除く。

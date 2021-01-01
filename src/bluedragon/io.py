@@ -74,7 +74,7 @@ def dump_my_grid(data: BattleData):
     newline()
     show_grid(data.my_grid)
     print(Color.OK_CYAN + "Positions: " + Color.END, end='')
-    for pos in data.listup_my_submarine_positions():
+    for pos in data.set_of_my_submarine_positions():
         print(pos.code(), end=' ')
     newline()
 

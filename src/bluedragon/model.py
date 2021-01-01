@@ -115,23 +115,23 @@ class BattleData:
         self.my_history: List[OpInfo] = list()
         self.opponent_history: List[OpInfo] = list()
 
-    def listup_my_submarine_positions(self) -> List[Pos]:
+    def set_of_my_submarine_positions(self) -> Set[Pos]:
         grid = self.my_grid
-        return [
+        return set(
             Pos(row, col)
             for row in range(ROW) for col in range(COL)
             if grid[row, col] > 0
-        ]
+        )
 
     def has_game_finished(self) -> bool:
         return self.my_alive_count <= 0 or self.opponent_alive_count <= 0
 
-    def listup_my_attackable_cells(self) -> Set[Pos]:
+    def set_of_my_attackable_cells(self) -> Set[Pos]:
         """
         自軍が攻撃可能なマスを列挙して set として返す。
         """
         attackable_cells: Set[Pos] = set()
-        submarine_poses = self.listup_my_submarine_positions()
+        submarine_poses = self.set_of_my_submarine_positions()
 
         # 各潜水艦の周囲8マスを集合に追加 (dy=dx=0 の場合も追加してしまうけど後で取り除くのでOK)
         for p in submarine_poses:
@@ -144,7 +144,7 @@ class BattleData:
         # 自軍の潜水艦マスには攻撃できないので除く
         return attackable_cells.difference(set(submarine_poses))
 
-    def listup_my_movable_cells(self, from_pos: Pos) -> Set[Pos]:
+    def set_of_my_movable_cells(self, from_pos: Pos) -> Set[Pos]:
         """
         指定した位置から移動可能なマスを列挙する。
         """

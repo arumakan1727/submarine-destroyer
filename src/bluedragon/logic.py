@@ -1,13 +1,15 @@
 from random import randint
 from typing import List, Optional
 
+import math
+
 import numpy as np
 
 from . import io
 from .model import OpInfo, AttackInfo, Response, BattleData
 from .traits import Pos
 from .traits import ROW, COL, INITIAL_HP, INITIAL_SUBMARINE_COUNT
-from .traits import listup_around_cells
+from .traits import set_of_around_cells
 
 
 def apply_my_op(data: BattleData, op_info: OpInfo) -> None:
@@ -56,7 +58,7 @@ def apply_opponent_op(data: BattleData, op: OpInfo) -> Optional[Response]:
             else:
                 return Response.Hit
         # 敵が攻撃した位置の周囲に自軍が一隻以上存在していたなら Near。
-        elif any(data.my_grid[i, j] > 0 for i, j in listup_around_cells(Pos(ay, ax))):
+        elif any(data.my_grid[i, j] > 0 for i, j in set_of_around_cells(Pos(ay, ax))):
             return Response.Near
         # 反応なし。
         else:
