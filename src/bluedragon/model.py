@@ -105,9 +105,9 @@ class BattleData:
         位置が確定している敵軍の潜水艦はこのフィールドに記録される。
         0 <= row < 5, 0 <= col < 5
 
-    potential: np.ndarray [np.int32]
-        そのマスに敵軍が存在する可能性を記録するための2次元配列。
-        各セルの初期値は 0 。
+    prob: np.ndarray [np.int32]
+        そのマスに敵軍が存在する確率を保持するための2次元配列 (probability の略)。
+        各セルの初期値は 4/25 。
 
     my_history: List[OpInfo]
         自軍の操作の歴史。
@@ -123,7 +123,7 @@ class BattleData:
         self.opponent_alive_count: int = INITIAL_SUBMARINE_COUNT
         self.my_grid: np.ndarray = np.zeros((ROW, COL), dtype=np.int32)
         self.opponent_grid: np.ndarray = np.zeros((ROW, COL), dtype=np.int32)
-        self.potential: np.ndarray = np.zeros((ROW, COL), dtype=np.int32)
+        self.prob: np.ndarray = np.full((ROW, COL), fill_value=INITIAL_SUBMARINE_COUNT / (ROW * COL), dtype=np.float64)
         self.my_history: List[OpInfo] = list()
         self.opponent_history: List[OpInfo] = list()
 
