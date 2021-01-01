@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-from bluedragon import logic
 from bluedragon import io
+from bluedragon import logic
 from bluedragon import model
 
 

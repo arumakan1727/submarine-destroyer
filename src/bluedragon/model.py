@@ -1,7 +1,8 @@
 import enum
-import numpy as np
-from typing import NamedTuple, Union, Optional, List, Set
 from dataclasses import dataclass
+from typing import NamedTuple, Union, Optional, List, Set
+
+import numpy as np
 
 from .traits import Pos
 from .traits import ROW, COL, INITIAL_SUBMARINE_COUNT

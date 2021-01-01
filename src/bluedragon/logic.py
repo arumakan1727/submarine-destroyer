@@ -1,12 +1,13 @@
-from typing import List
 from random import randint
+from typing import List, Optional
+
 import numpy as np
 
+from . import io
+from .model import OpInfo, AttackInfo, Response, BattleData
 from .traits import Pos
 from .traits import ROW, COL, INITIAL_HP, INITIAL_SUBMARINE_COUNT
-from .traits import is_within_area, listup_around_cells
-from .model import OpInfo, AttackInfo, MoveInfo, Response, BattleData
-from . import io
+from .traits import listup_around_cells
 
 
 def apply_my_op(data: BattleData, op_info: OpInfo) -> None:

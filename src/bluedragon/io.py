@@ -1,9 +1,10 @@
-import numpy as np
 from typing import Any
 
+import numpy as np
+
+from .model import OpInfo, AttackInfo, MoveInfo, Response, BattleData
 from .traits import Pos
 from .traits import ROW, COL
-from .model import OpInfo, AttackInfo, MoveInfo, Response, BattleData
 
 
 class Color:
