@@ -33,16 +33,17 @@ def apply_attack_response(data: BattleData, resp: Response) -> None:
     """
     assert data.my_history[-1].is_attack()
     data.my_history[-1].detail.resp = resp
+    attacked_pos = data.my_history[-1].detail.attack_pos
 
     # 確率グリッドの更新
     if resp is Response.Hit:
-        _update_prob_for_my_attack_hit(data.prob, data.my_history[-1].detail, data.opponent_alive_count)
+        _update_prob_for_my_attack_hit(data.prob, attacked_pos, data.opponent_alive_count)
     elif resp is Response.Dead:
-        _update_prob_for_my_attack_dead(data.prob, data.my_history[-1].detail, data.opponent_alive_count)
+        _update_prob_for_my_attack_dead(data.prob, attacked_pos, data.opponent_alive_count)
     elif resp is Response.Near:
-        _update_prob_for_my_attack_near(data.prob, data.my_history[-1].detail, data.opponent_alive_count)
+        _update_prob_for_my_attack_near(data.prob, attacked_pos, data.opponent_alive_count)
     elif resp is Response.Nothing:
-        _update_prob_for_my_attack_nothing(data.prob, data.my_history[-1].detail)
+        _update_prob_for_my_attack_nothing(data.prob, attacked_pos)
 
     if resp is Response.Dead:
         data.opponent_alive_count -= 1
@@ -192,13 +193,11 @@ def _suck_one_submarine_prob(prob: np.ndarray, source_candidates: Set[Pos], oppo
     return prob_sum
 
 
-def _update_prob_for_my_attack_hit(prob: np.ndarray, attack_info: AttackInfo, opponent_alive_count: int) -> None:
+def _update_prob_for_my_attack_hit(prob: np.ndarray, hit_pos: Pos, opponent_alive_count: int) -> None:
     """
     自軍の攻撃がヒットしたとき用の確率グリッド更新処理。
     opponent_alive_count は敵軍が死ぬ前の隻数。
     """
-    hit_pos = attack_info.attack_pos
-
     # 既に確率が 1 になっているので early return
     if prob[hit_pos.row, hit_pos.col] >= (1.0 - 1e-10):
         return
@@ -211,23 +210,20 @@ def _update_prob_for_my_attack_hit(prob: np.ndarray, attack_info: AttackInfo, op
     prob[hit_pos.row, hit_pos.col] = 1.0
 
 
-def _update_prob_for_my_attack_dead(prob: np.ndarray, attack_info: AttackInfo, opponent_alive_count: int) -> None:
+def _update_prob_for_my_attack_dead(prob: np.ndarray, dead_pos: Pos, opponent_alive_count: int) -> None:
     """
     自軍の攻撃がヒットして敵軍が死んだ用の確率グリッド更新処理。
     opponent_alive_count は敵軍が死ぬ前の隻数。
     """
-    _update_prob_for_my_attack_hit(prob, attack_info, opponent_alive_count)
-    dead_pos = attack_info.attack_pos
+    _update_prob_for_my_attack_hit(prob, dead_pos, opponent_alive_count)
     prob[dead_pos.row, dead_pos.col] = 0.0
     assert math.isclose(np.sum(prob), opponent_alive_count - 1)  # 全マスの確率の総和は敵軍の(死んだ後の)隻数に等しいはず
 
 
-def _update_prob_for_my_attack_near(prob: np.ndarray, attack_info: AttackInfo, opponent_alive_count: int) -> None:
+def _update_prob_for_my_attack_near(prob: np.ndarray, attacked_pos: Pos, opponent_alive_count: int) -> None:
     """
     自軍の攻撃が波高しだった用の確率グリッド更新処理。
     """
-    attacked_pos = attack_info.attack_pos
-
     # もし波高しの周囲に、位置が明らかな敵艦が存在する場合は何もしない。
     if len(set_of_around_cells(attacked_pos) & _set_of_cells_greater_eq_one(prob)) > 0:
         return
@@ -235,17 +231,17 @@ def _update_prob_for_my_attack_near(prob: np.ndarray, attack_info: AttackInfo, o
     # 攻撃マスの確率をゼロにして他のマスへ分散 (ヒットはしてないので攻撃した位置には確実に居ない)
     _suck_spot_and_distribute_prob(prob, attacked_pos)
 
+    # 1隻分の確率を各マスから奪って波高しの周囲マスに分配
     _suck_one_submarine_prob(prob, all_cell_set() - {attacked_pos}, opponent_alive_count)
-
     destinations = set_of_around_cells(attacked_pos) - _set_of_zero_union_greater_eq_one(prob)
     _distribute_prob(prob, 1.0, destinations)
 
 
-def _update_prob_for_my_attack_nothing(prob: np.ndarray, attack_info: AttackInfo) -> None:
+def _update_prob_for_my_attack_nothing(prob: np.ndarray, attacked_pos: Pos) -> None:
     """
     自軍の攻撃が反応なしだった用の確率グリッド更新処理。
     """
-    nothing_area = set_of_around_cells(attack_info.attack_pos).union({attack_info.attack_pos})
+    nothing_area = set_of_around_cells(attacked_pos).union({attacked_pos})
 
     # 反応なしだったマスとその周囲の確率をゼロにし、総和を s に格納
     s = 0

@@ -13,9 +13,7 @@ class TestUpdateProb(TestCase):
     def test__update_prob_for_my_attack_hit_01(self):
         def test_sub(p: Pos):
             m = create_initial_prob_grid(submarine_count=4)
-            a = AttackInfo(attack_pos=p)
-
-            logic._update_prob_for_my_attack_hit(m, a, 4)
+            logic._update_prob_for_my_attack_hit(m, p, 4)
             print(m)
             self.assertAlmostEqual(m.sum(), 4)
             self.assertEqual(m[p.row, p.col], 1)
@@ -35,13 +33,13 @@ class TestUpdateProb(TestCase):
         p2 = Pos(0, 4)
         p3 = Pos(2, 2)
         p4 = Pos(4, 3)
-        logic._update_prob_for_my_attack_hit(m, AttackInfo(p1), 4)
+        logic._update_prob_for_my_attack_hit(m, p1, 4)
         print(m)
-        logic._update_prob_for_my_attack_hit(m, AttackInfo(p2), 4)
+        logic._update_prob_for_my_attack_hit(m, p2, 4)
         print(m)
-        logic._update_prob_for_my_attack_hit(m, AttackInfo(p3), 4)
+        logic._update_prob_for_my_attack_hit(m, p3, 4)
         print(m)
-        logic._update_prob_for_my_attack_hit(m, AttackInfo(p4), 4)
+        logic._update_prob_for_my_attack_hit(m, p4, 4)
         print(m)
 
         self.assertEqual(m[p1.row, p1.col], 1)
@@ -56,23 +54,23 @@ class TestUpdateProb(TestCase):
         """
         m = create_initial_prob_grid(4)
         p = Pos(1, 1)
-        logic._update_prob_for_my_attack_hit(m, AttackInfo(p), 4)
-        logic._update_prob_for_my_attack_hit(m, AttackInfo(p), 4)
-        logic._update_prob_for_my_attack_hit(m, AttackInfo(p), 4)
-        logic._update_prob_for_my_attack_hit(m, AttackInfo(p), 4)
+        logic._update_prob_for_my_attack_hit(m, p, 4)
+        logic._update_prob_for_my_attack_hit(m, p, 4)
+        logic._update_prob_for_my_attack_hit(m, p, 4)
+        logic._update_prob_for_my_attack_hit(m, p, 4)
         self.assertEqual(m[p.row, p.col], 1)
 
     def test__update_prob_for_my_attack_dead_01(self):
         m = create_initial_prob_grid(4)
         p = Pos(1, 1)
-        logic._update_prob_for_my_attack_dead(m, AttackInfo(p), 4)
+        logic._update_prob_for_my_attack_dead(m, p, 4)
         self.assertEqual(m[p.row, p.col], 0)
         self.assertEqual(m.sum(), 3)
 
     def test__update_prob_for_my_attack_near_01(self):
         m = create_initial_prob_grid(4)
         p = Pos(2, 2)
-        logic._update_prob_for_my_attack_near(m, AttackInfo(p), 4)
+        logic._update_prob_for_my_attack_near(m, p, 4)
         print(m)
         self.assertEqual(m[p.row, p.col], 0)
         self.assertAlmostEqual(m.sum(), 4)
@@ -80,7 +78,7 @@ class TestUpdateProb(TestCase):
     def test__update_prob_for_my_attack_nothing_01(self):
         m = create_initial_prob_grid(4)
         p = Pos(2, 2)
-        logic._update_prob_for_my_attack_nothing(m, AttackInfo(p))
+        logic._update_prob_for_my_attack_nothing(m, p)
         print(m)
         self.assertEqual(m[p.row, p.col], 0)
         self.assertTrue(all(m[y, x] == 0 for y, x in set_of_around_cells(p)))
@@ -91,22 +89,22 @@ class TestUpdateProb(TestCase):
         p1 = Pos(2, 2)
         p2 = Pos(0, 4)
         p3 = Pos(2, 1)
-        logic._update_prob_for_my_attack_near(m, AttackInfo(p1), 4)
+        logic._update_prob_for_my_attack_near(m, p1, 4)
         self.assertAlmostEqual(4, m.sum())
 
-        logic._update_prob_for_my_attack_hit(m, AttackInfo(pX), 4)
-        self.assertAlmostEqual(4, m.sum())
-        self.assertEqual(1, m[pX.row, pX.col])
-
-        logic._update_prob_for_my_attack_near(m, AttackInfo(p2), 4)
+        logic._update_prob_for_my_attack_hit(m, pX, 4)
         self.assertAlmostEqual(4, m.sum())
         self.assertEqual(1, m[pX.row, pX.col])
 
-        logic._update_prob_for_my_attack_hit(m, AttackInfo(pX), 4)
+        logic._update_prob_for_my_attack_near(m, p2, 4)
         self.assertAlmostEqual(4, m.sum())
         self.assertEqual(1, m[pX.row, pX.col])
 
-        logic._update_prob_for_my_attack_near(m, AttackInfo(p3), 4)
+        logic._update_prob_for_my_attack_hit(m, pX, 4)
+        self.assertAlmostEqual(4, m.sum())
+        self.assertEqual(1, m[pX.row, pX.col])
+
+        logic._update_prob_for_my_attack_near(m, p3, 4)
         print(m)
         self.assertAlmostEqual(4, m.sum())
         self.assertEqual(1, m[pX.row, pX.col])
