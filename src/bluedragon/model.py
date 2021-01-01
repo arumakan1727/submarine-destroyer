@@ -3,22 +3,9 @@ import numpy as np
 from typing import NamedTuple, Union, Optional, List, Set
 from dataclasses import dataclass
 
-ROW = 5
-COL = 5
-INITIAL_SUBMARINE_COUNT = 4
-INITIAL_HP = 3
-
-
-class Pos(NamedTuple):
-    row: int
-    col: int
-
-    def code(self) -> str:
-        return chr(ord('A') + self.row) + str(self.col + 1)
-
-
-def is_within_area(p: Pos) -> bool:
-    return (p.row in range(0, ROW)) and (p.col in range(0, COL))
+from .traits import Pos
+from .traits import ROW, COL, INITIAL_SUBMARINE_COUNT
+from .traits import is_within_area
 
 
 class Response(enum.Enum):

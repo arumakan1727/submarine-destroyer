@@ -1,8 +1,11 @@
 from typing import List
 from random import randint
 import numpy as np
-from .model import Pos, OpInfo, AttackInfo, MoveInfo, Response, BattleData
-from .model import ROW, COL, INITIAL_HP, INITIAL_SUBMARINE_COUNT
+
+from .traits import Pos
+from .traits import ROW, COL, INITIAL_HP, INITIAL_SUBMARINE_COUNT
+from .traits import is_within_area, listup_around_cells
+from .model import OpInfo, AttackInfo, MoveInfo, Response, BattleData
 from . import io
 
 
