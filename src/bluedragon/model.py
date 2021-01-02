@@ -1,21 +1,12 @@
 import enum
-import numpy as np
-from typing import NamedTuple, Union, Optional, List
-from random import shuffle, randint, choice
 from dataclasses import dataclass
+from typing import NamedTuple, Union, Optional, List, Set
 
-ROW = 5
-COL = 5
-INITIAL_SUBMARINE_COUNT = 4
-INITIAL_HP = 3
+import numpy as np
 
-
-class Pos(NamedTuple):
-    row: int
-    col: int
-
-    def code(self) -> str:
-        return chr(ord('A') + self.row) + str(self.col + 1)
+from .rule import Pos
+from .rule import ROW, COL, INITIAL_SUBMARINE_COUNT
+from .rule import is_within_area
 
 
 class Response(enum.Enum):
@@ -27,7 +18,7 @@ class Response(enum.Enum):
 
 @dataclass
 class AttackInfo:
-    pos: Pos
+    attack_pos: Pos
     resp: Optional[Response] = None
 
 
@@ -68,7 +59,7 @@ class OpInfo(NamedTuple):
 
     def __str__(self) -> str:
         if self.is_attack():
-            return "Attack(to: %s)" % self.detail.pos.code()
+            return "Attack(to: %s)" % self.detail.attack_pos.code()
 
         if self.is_move():
             info = self.detail
@@ -102,9 +93,9 @@ class BattleData:
         位置が確定している敵軍の潜水艦はこのフィールドに記録される。
         0 <= row < 5, 0 <= col < 5
 
-    potential: np.ndarray [np.int32]
-        そのマスに敵軍が存在する可能性を記録するための2次元配列。
-        各セルの初期値は 0 。
+    prob: np.ndarray [np.float64]
+        そのマスに敵軍が存在する確率を保持するための2次元配列 (probability の略)。
+        各セルの初期値は 4/25 。
 
     my_history: List[OpInfo]
         自軍の操作の歴史。
@@ -113,6 +104,11 @@ class BattleData:
     opponent_history: List[OpInfo]
         敵軍の操作の歴史。
         初手の操作はリストの先頭 [0] に格納され、最後の操作の情報はリストの末尾 [-1] に格納される。
+
+    tracking_cell: Optional[Pos]
+        攻撃をし続ける対象のセル位置。
+        自軍の攻撃がヒットしたときに 非None になる。
+        敵の移動情報 と 移動後に攻撃が当たったかどうか によって変動する。見失った場合は None になる。
     """
 
     def __init__(self):
@@ -120,17 +116,50 @@ class BattleData:
         self.opponent_alive_count: int = INITIAL_SUBMARINE_COUNT
         self.my_grid: np.ndarray = np.zeros((ROW, COL), dtype=np.int32)
         self.opponent_grid: np.ndarray = np.zeros((ROW, COL), dtype=np.int32)
-        self.potential: np.ndarray = np.zeros((ROW, COL), dtype=np.int32)
+        self.prob: np.ndarray = np.full((ROW, COL), fill_value=INITIAL_SUBMARINE_COUNT / (ROW * COL), dtype=np.float64)
         self.my_history: List[OpInfo] = list()
         self.opponent_history: List[OpInfo] = list()
+        self.tracking_cell: Optional[Pos] = None
 
-    def listup_my_submarine_positions(self) -> List[Pos]:
+    def set_of_my_submarine_positions(self) -> Set[Pos]:
         grid = self.my_grid
-        return [
+        return set(
             Pos(row, col)
             for row in range(ROW) for col in range(COL)
             if grid[row, col] > 0
-        ]
+        )
 
     def has_game_finished(self) -> bool:
         return self.my_alive_count <= 0 or self.opponent_alive_count <= 0
+
+    def set_of_my_attackable_cells(self) -> Set[Pos]:
+        """
+        自軍が攻撃可能なマスを列挙して set として返す。
+        """
+        attackable_cells: Set[Pos] = set()
+        submarine_poses = self.set_of_my_submarine_positions()
+
+        # 各潜水艦の周囲8マスを集合に追加 (dy=dx=0 の場合も追加してしまうけど後で取り除くのでOK)
+        for p in submarine_poses:
+            for dy in [-1, 0, +1]:
+                for dx in [-1, 0, +1]:
+                    attack_to = Pos(row=p.row + dy, col=p.col + dx)
+                    if is_within_area(attack_to):
+                        attackable_cells.add(attack_to)
+
+        # 自軍の潜水艦マスには攻撃できないので除く
+        return attackable_cells.difference(set(submarine_poses))
+
+    def set_of_my_movable_cells(self, from_pos: Pos) -> Set[Pos]:
+        """
+        指定した位置から移動可能なマスを列挙する。
+        """
+        assert self.my_grid[from_pos.row, from_pos.col] > 0
+        my_submarine_poses = self.set_of_my_submarine_positions()
+        movable_cells: Set[Pos] = set()
+        for d in [-2, -1, +1, +2]:
+            for dy, dx in [(d, 0), (0, d)]:
+                to = Pos(row=from_pos.row + dy, col=from_pos.col + dx)
+                if is_within_area(to) and (to not in my_submarine_poses):
+                    movable_cells.add(to)
+        return movable_cells

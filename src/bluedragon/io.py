@@ -1,14 +1,14 @@
-import numpy as np
-from . import logic
 from typing import Any
-from .model import ROW, COL
-from .model import OpInfo, AttackInfo, MoveInfo, Pos, Response, BattleData
+
+from .model import OpInfo, AttackInfo, MoveInfo, Response, BattleData
+from .rule import Pos
+from .rule import ROW, COL
 
 
 class Color:
     HEADER = '\033[95m'
     OK_BLUE = '\033[94m'
-    OK_CYAN = '\033[96m'
+    INFO_CYAN = '\033[96m'
     OK_GREEN = '\033[92m'
     WARNING = '\033[93m'
     FAIL = '\033[91m'
@@ -16,9 +16,29 @@ class Color:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+    @staticmethod
+    def magenta(s: Any) -> str:
+        return Color.HEADER + str(s) + Color.END
+
+    @staticmethod
+    def cyan(s: Any) -> str:
+        return Color.INFO_CYAN + str(s) + Color.END
+
+    @staticmethod
+    def green(s: Any) -> str:
+        return Color.OK_GREEN + str(s) + Color.END
+
+    @staticmethod
+    def yellow(s: Any) -> str:
+        return Color.WARNING + str(s) + Color.END
+
+    @staticmethod
+    def red(s: Any) -> str:
+        return Color.FAIL + str(s) + Color.END
+
 
 def info(msg: Any, end='\n'):
-    print(Color.OK_CYAN + Color.BOLD + "[Info] " + Color.END + str(msg), end=end)
+    print(Color.INFO_CYAN + Color.BOLD + "[Info] " + Color.END + str(msg), end=end)
 
 
 def success(msg: Any, end='\n'):
@@ -59,7 +79,8 @@ def newline():
     print()
 
 
-def show_grid(grid: np.ndarray):
+def dump_my_grid(data: BattleData):
+    grid = data.my_grid
     print(Color.HEADER + "   1  2  3  4  5" + Color.END)
     for row in range(ROW):
         print(Color.HEADER + chr(ord('A') + row) + Color.END, end='')
@@ -68,18 +89,37 @@ def show_grid(grid: np.ndarray):
         newline()
 
 
-def dump_my_grid(data: BattleData):
-    newline()
-    show_grid(data.my_grid)
-    print(Color.OK_CYAN + "Positions: " + Color.END, end='')
-    for pos in data.listup_my_submarine_positions():
+def dump_my_submarine_pos_codes(data: BattleData):
+    print(Color.INFO_CYAN + "自軍の潜水艦の位置: " + Color.END, end='')
+    for pos in data.set_of_my_submarine_positions():
         print(pos.code(), end=' ')
     newline()
 
 
+def dump_battle_data(data: BattleData):
+    newline()
+    print("--------- Battle Data ---------")
+    # 確率グリッドの表示
+    print(data.prob)
+
+    # 自軍の配置グリッドの表示
+    dump_my_grid(data)
+
+    # 自軍の潜水艦の位置の表示
+    dump_my_submarine_pos_codes(data)
+
+    # tracking_cell の表示
+    print(Color.INFO_CYAN + "位置が明らかな敵艦:" + Color.END,
+          "None" if (data.tracking_cell is None) else data.tracking_cell.code())
+
+    # 敵軍の生きている潜水艦数と自軍の生きている潜水艦数 の表示
+    print(Color.INFO_CYAN + "自軍の生き残り艦数:" + Color.END, data.my_alive_count)
+    print(Color.INFO_CYAN + "敵軍の生き残り艦数:" + Color.END, data.opponent_alive_count)
+
+
 def read_response() -> Response:
     while True:
-        print("How was the response of attack? [hit/dead/near/none]: ", end='')
+        print("自軍が攻撃しました。敵軍からのレスポンスを入力してください [hit/dead/near/none]: ", end='')
         s = input().strip().lower()
         if s == "hit":
             return Response.Hit
@@ -122,7 +162,7 @@ def read_cell_code(message: str) -> Pos:
 
 def read_attack_info():
     p = read_cell_code("Opponent's attack target cell (ex: `E2`): ")
-    return OpInfo(AttackInfo(pos=p))
+    return OpInfo(AttackInfo(attack_pos=p))
 
 
 def read_move_info() -> OpInfo:
@@ -156,10 +196,27 @@ def read_move_info() -> OpInfo:
 
 def read_opponent_op() -> OpInfo:
     while True:
-        print("Which is the opponent's action? [attack/move]: ", end='')
+        print("敵の行動を入力してください [attack/move]: ", end='')
         s = input().strip().lower()
         if s == "attack":
             return read_attack_info()
         if s == "move":
             return read_move_info()
         fail("Invalid input")
+
+
+def print_title():
+    print(r"""
+ ____        _                          _
+/ ___| _   _| |__  _ __ ___   __ _ _ __(_)_ __   ___
+\___ \| | | | '_ \| '_ ` _ \ / _` | '__| | '_ \ / _ \
+ ___) | |_| | |_) | | | | | | (_| | |  | | | | |  __/
+|____/ \__,_|_.__/|_| |_| |_|\__,_|_|  |_|_| |_|\___|
+
+ ____            _
+|  _ \  ___  ___| |_ _ __ ___  _   _  ___ _ __
+| | | |/ _ \/ __| __| '__/ _ \| | | |/ _ \ '__|
+| |_| |  __/\__ \ |_| | | (_) | |_| |  __/ |
+|____/ \___||___/\__|_|  \___/ \__, |\___|_|
+                               |___/
+""")
