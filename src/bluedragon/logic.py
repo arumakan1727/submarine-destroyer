@@ -101,6 +101,17 @@ def update_tracking_cell(data: BattleData) -> None:
     last_my_op = data.my_history[-1]
     last_opponent_op = None if len(data.opponent_history) <= 0 else data.opponent_history[-1]
 
+    # 位置が明らか かつ 敵が1艦しかいない場合
+    if (current_tracking_cell is not None) and (data.opponent_alive_count == 1):
+        if last_opponent_op.is_move():
+            sy, sx = current_tracking_cell
+            dirY = last_opponent_op.detail.dirY
+            dirX = last_opponent_op.detail.dirX
+            data.tracking_cell = Pos(sy + dirY, sx + dirX)
+            return
+        else:
+            return
+
     data.tracking_cell = _calculate_next_tracking_cell(
         current_tracking_cell,
         last_my_op=last_my_op,
