@@ -71,14 +71,19 @@ def apply_opponent_op(data: BattleData, op: OpInfo) -> Optional[Response]:
             data.my_grid[ay, ax] -= 1
             # HPが0なら自軍の潜水艦が死んだので Dead を返し、そうでなければ Hit を返す。
             if data.my_grid[ay, ax] <= 0:
+                data.my_alive_count -= 1
+                data.opponent_history[-1].detail.resp = Response.Dead
                 return Response.Dead
             else:
+                data.opponent_history[-1].detail.resp = Response.Hit
                 return Response.Hit
         # 敵が攻撃した位置の周囲に自軍が一隻以上存在していたなら Near。
         elif any(data.my_grid[i, j] > 0 for i, j in set_of_around_cells(Pos(ay, ax))):
+            data.opponent_history[-1].detail.resp = Response.Near
             return Response.Near
         # 反応なし。
         else:
+            data.opponent_history[-1].detail.resp = Response.Nothing
             return Response.Nothing
 
     elif op.is_move():
