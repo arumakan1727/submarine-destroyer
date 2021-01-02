@@ -1,14 +1,14 @@
 import math
-from random import randint
+from random import randint, choice
 from typing import List, Optional, Set
 
 import numpy as np
 
 from . import io
 from .model import OpInfo, AttackInfo, Response, BattleData, MoveInfo
-from .traits import Pos
-from .traits import ROW, COL, INITIAL_HP, INITIAL_SUBMARINE_COUNT
-from .traits import set_of_around_cells, all_cell_set, is_within_area
+from .rule import Pos
+from .rule import ROW, COL, INITIAL_HP, INITIAL_SUBMARINE_COUNT
+from .rule import set_of_around_cells, all_cell_set, is_within_area
 
 
 def apply_my_op(data: BattleData, op_info: OpInfo) -> None:

@@ -1,8 +1,8 @@
 from typing import Any
 
 from .model import OpInfo, AttackInfo, MoveInfo, Response, BattleData
-from .traits import Pos
-from .traits import ROW, COL
+from .rule import Pos
+from .rule import ROW, COL
 
 
 class Color:

@@ -4,9 +4,9 @@ from typing import NamedTuple, Union, Optional, List, Set
 
 import numpy as np
 
-from .traits import Pos
-from .traits import ROW, COL, INITIAL_SUBMARINE_COUNT
-from .traits import is_within_area
+from .rule import Pos
+from .rule import ROW, COL, INITIAL_SUBMARINE_COUNT
+from .rule import is_within_area
 
 
 class Response(enum.Enum):

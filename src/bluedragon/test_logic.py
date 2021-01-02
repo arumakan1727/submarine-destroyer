@@ -2,7 +2,7 @@ from unittest import TestCase
 
 from . import logic
 from .model import *
-from .traits import set_of_around_cells
+from .rule import set_of_around_cells
 
 
 def create_initial_prob_grid(submarine_count: int) -> np.ndarray:
