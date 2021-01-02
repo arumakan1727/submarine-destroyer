@@ -75,6 +75,20 @@ class TestUpdateProb(TestCase):
         self.assertEqual(m[p.row, p.col], 0)
         self.assertAlmostEqual(m.sum(), 4)
 
+    def test__update_prob_for_my_attack_near_02(self):
+        m = np.array(
+            [[0., 0., 0., 0.21316704, 0.0386818],
+             [0., 0., 0., 0., 0.],
+             [0., 0., 0., 0., 0.],
+             [0.13779786, 0.12376803, 0.14775188, 0.04511525, 0.],
+             [0.1373082, 0.10787628, 0.04853365, 0., 0.]]
+        )
+        print(m.sum())
+        p = Pos(3, 3)
+        logic._update_prob_for_my_attack_near(m, p, 1)
+        self.assertEqual(m[p.row, p.col], 0)
+        self.assertAlmostEqual(m.sum(), 1)
+
     def test__update_prob_for_my_attack_nothing_01(self):
         m = create_initial_prob_grid(4)
         p = Pos(2, 2)

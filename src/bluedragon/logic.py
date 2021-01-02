@@ -261,12 +261,17 @@ def _update_prob_for_my_attack_near(prob: np.ndarray, attacked_pos: Pos, opponen
     if len(set_of_around_cells(attacked_pos) & _set_of_cells_greater_eq_one(prob)) > 0:
         return
 
+    # もし敵が攻撃してきた位置が既に確率ゼロなら何もしない。
+    if math.isclose(0.0, prob[attacked_pos.row, attacked_pos.col], abs_tol=1e-7):
+        return
+
     # 攻撃マスの確率をゼロにして他のマスへ分散 (ヒットはしてないので攻撃した位置には確実に居ない)
     _suck_spot_and_distribute_prob(prob, attacked_pos)
 
     # 1隻分の確率を各マスから奪って波高しの周囲マスに分配
-    _suck_one_submarine_prob(prob, all_cell_set() - {attacked_pos}, opponent_alive_count)
+    # !!! destinations は suck する前に得ること！
     destinations = set_of_around_cells(attacked_pos) - _set_of_zero_union_greater_eq_one(prob)
+    _suck_one_submarine_prob(prob, all_cell_set() - {attacked_pos}, opponent_alive_count)
     _distribute_prob(prob, 1.0, destinations)
 
 
@@ -306,13 +311,19 @@ def _update_prob_for_opponent_move(prob: np.ndarray, moving_info: MoveInfo) -> N
         if is_within_area(Pos(y + dirY, x + dirX))
     ]
     prob_sum = sum(prob[y, x] for y, x in from_cells)
+    io.info("_update_prob_for_opponent_move: prob_sum=" + str(prob_sum))
+
+    # 移動元の確率の総和がゼロならこれ以上何もしない。
+    # (あとの処理で prob_sum で割るためゼロ除算を避ける)
+    if math.isclose(0, prob_sum, abs_tol=1e-7):
+        return
 
     # 移動させた分の確率値の一時的な保存場所。
     # for文で確率値の数割を移動先へ加算したあと、その加算した値ををさらに移動させると確率が壊れるため)
     a = np.zeros((ROW, COL), dtype=np.float64)
 
     for y, x in from_cells:
-        v = prob[y, x] * (1 / prob_sum)
+        v = prob[y, x] * (prob[y, x] / prob_sum)
         prob[y, x] -= v
         a[y + dirY, x + dirX] = v
 
