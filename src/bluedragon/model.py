@@ -155,10 +155,11 @@ class BattleData:
         指定した位置から移動可能なマスを列挙する。
         """
         assert self.my_grid[from_pos.row, from_pos.col] > 0
+        my_submarine_poses = self.set_of_my_submarine_positions()
         movable_cells: Set[Pos] = set()
         for d in [-2, -1, +1, +2]:
             for dy, dx in [(d, 0), (0, d)]:
                 to = Pos(row=from_pos.row + dy, col=from_pos.col + dx)
-                if is_within_area(to):
+                if is_within_area(to) and (to not in my_submarine_poses):
                     movable_cells.add(to)
         return movable_cells
