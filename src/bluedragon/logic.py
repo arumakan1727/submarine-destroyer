@@ -51,10 +51,18 @@ def apply_attack_response(data: BattleData, resp: Response) -> None:
 
 def apply_opponent_op(data: BattleData, op: OpInfo) -> Optional[Response]:
     """
-    敵軍の操作を data に適用する
+    敵軍の操作を data に適用する。
+    敵軍の操作が攻撃だった場合はそれに対するレスポンスを返す。 そうでなければ None を返す。
     """
     data.opponent_history.append(op)
 
+    # 確率グリッドの更新
+    if op.is_attack():
+        _update_prob_for_opponent_attack(data.prob, op.detail.attack_pos, data.opponent_alive_count)
+    elif op.is_move():
+        _update_prob_for_opponent_move(data.prob, op.detail)
+
+    # 敵の攻撃を自軍のHPへ反映・レスポンスを返す。
     if op.is_attack():
         ay, ax = op.detail.attack_pos
 
