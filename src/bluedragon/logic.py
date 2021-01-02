@@ -168,7 +168,8 @@ def suggest_my_op(data: BattleData) -> OpInfo:
             (true_highest_prob_cell.code(), true_highest_prob_value))
 
     # 確率最高値のマスの確率がかなり高く、それにもかかわらず自軍の射程にない場合は自軍をその方角へ移動させる
-    if true_highest_prob_value > 0.5 and true_highest_prob_cell not in attackable_cells:
+    probability_threshold_high = (data.opponent_alive_count * 0.1)
+    if true_highest_prob_value > probability_threshold_high and true_highest_prob_cell not in attackable_cells:
         # 確率最高値のマスが自軍の位置とかぶっている場合はその自軍の艦を移動させる
         if true_highest_prob_cell in data.set_of_my_submarine_positions():
             from_pos = true_highest_prob_cell
@@ -209,7 +210,7 @@ def suggest_my_op(data: BattleData) -> OpInfo:
     io.info("攻撃可能なマスの中で確率最高値のマスは %s (確率 %g) です" %
             (attackable_highest_prob_cell.code(), attackable_highest_prob_value))
 
-    # 最高確率値がこの下限しきい値より確率が高ければ攻撃する
+    # 最高確率値がしきい値より確率が高ければ攻撃する
     probability_threshold_high = (data.opponent_alive_count * 0.1)
     if attackable_highest_prob_value > probability_threshold_high:
         io.info("確率値がしきい値 %g より高いので %s を攻撃します" %
