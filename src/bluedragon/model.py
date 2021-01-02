@@ -93,7 +93,7 @@ class BattleData:
         位置が確定している敵軍の潜水艦はこのフィールドに記録される。
         0 <= row < 5, 0 <= col < 5
 
-    prob: np.ndarray [np.int32]
+    prob: np.ndarray [np.float64]
         そのマスに敵軍が存在する確率を保持するための2次元配列 (probability の略)。
         各セルの初期値は 4/25 。
 
