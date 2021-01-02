@@ -29,6 +29,9 @@ def main():
             io.info(response)
             logic.apply_attack_response(battle_data, response)
 
+        # 攻撃対象のマス位置を更新 (明確な敵艦の位置がわからなければ None になる)
+        logic.update_tracking_cell(battle_data)
+
     def opponent_turn():
         # 敵軍の操作を入力, 表示, battle_data に反映
         op = io.read_opponent_op()

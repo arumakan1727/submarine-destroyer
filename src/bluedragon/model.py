@@ -104,6 +104,11 @@ class BattleData:
     opponent_history: List[OpInfo]
         敵軍の操作の歴史。
         初手の操作はリストの先頭 [0] に格納され、最後の操作の情報はリストの末尾 [-1] に格納される。
+
+    tracking_cell: Optional[Pos]
+        攻撃をし続ける対象のセル位置。
+        自軍の攻撃がヒットしたときに 非None になる。
+        敵の移動情報 と 移動後に攻撃が当たったかどうか によって変動する。見失った場合は None になる。
     """
 
     def __init__(self):
@@ -114,6 +119,7 @@ class BattleData:
         self.prob: np.ndarray = np.full((ROW, COL), fill_value=INITIAL_SUBMARINE_COUNT / (ROW * COL), dtype=np.float64)
         self.my_history: List[OpInfo] = list()
         self.opponent_history: List[OpInfo] = list()
+        self.tracking_cell: Optional[Pos] = None
 
     def set_of_my_submarine_positions(self) -> Set[Pos]:
         grid = self.my_grid

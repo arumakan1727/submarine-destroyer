@@ -33,9 +33,9 @@ def apply_attack_response(data: BattleData, resp: Response) -> None:
     """
     assert data.my_history[-1].is_attack()
     data.my_history[-1].detail.resp = resp
-    attacked_pos = data.my_history[-1].detail.attack_pos
 
     # 確率グリッドの更新
+    attacked_pos = data.my_history[-1].detail.attack_pos
     if resp is Response.Hit:
         _update_prob_for_my_attack_hit(data.prob, attacked_pos, data.opponent_alive_count)
     elif resp is Response.Dead:
@@ -58,9 +58,10 @@ def apply_opponent_op(data: BattleData, op: OpInfo) -> Optional[Response]:
     if op.is_attack():
         ay, ax = op.detail.attack_pos
 
-        # 敵が攻撃した位置に自軍が存在していたなら、 HP を減算して Hit または Dead の適切な方を返す。
+        # 敵が攻撃した位置に自軍が存在していたならHPを減算する。
         if data.my_grid[ay, ax] > 0:
             data.my_grid[ay, ax] -= 1
+            # HPが0なら自軍の潜水艦が死んだので Dead を返し、そうでなければ Hit を返す。
             if data.my_grid[ay, ax] <= 0:
                 return Response.Dead
             else:
@@ -74,6 +75,23 @@ def apply_opponent_op(data: BattleData, op: OpInfo) -> Optional[Response]:
 
     elif op.is_move():
         return None
+
+
+def update_tracking_cell(data: BattleData) -> None:
+    """
+    対戦データ内の tracking_cell 変数、すなわち位置が明らかで、次も攻撃する対象の敵艦の位置 (=マーク位置) を更新する。
+    この関数は、自軍の操作をした直後 (攻撃した場合はそのレスポンスを受け取った直後) に呼び出されることを想定している。
+    """
+    assert len(data.my_history) > 0
+
+    current_tracking_cell = data.tracking_cell
+    last_my_op = data.my_history[-1]
+    last_opponent_op = None if len(data.opponent_history) <= 0 else data.opponent_history[-1]
+
+    data.tracking_cell = _calculate_next_tracking_cell(
+        current_tracking_cell,
+        last_my_op=last_my_op,
+        last_opponent_op=last_opponent_op)
 
 
 def suggest_my_op(data: BattleData) -> OpInfo:
@@ -284,3 +302,56 @@ def _update_prob_for_opponent_move(prob: np.ndarray, moving_info: MoveInfo) -> N
         a[y + dirY, x + dirX] = v
 
     prob += a
+
+
+def _calculate_next_tracking_cell(
+        current_tracking_cell: Optional[Pos],
+        last_my_op: OpInfo,
+        last_opponent_op: Optional[OpInfo]
+) -> Optional[Pos]:
+    """
+    現在の敵艦マーク位置と、自軍の直前の操作、敵軍の直前の操作から、次のターン用の敵艦マーク位置を求めて返す。
+    この関数は、自軍の操作をした直後 (攻撃した場合はそのレスポンスを受け取った直後) に呼び出されることを想定している。
+    my_last_op に直前のターンの自軍の操作を渡し、opponent_last_op には「my_my_last_op の前のターンでの敵軍の操作」を渡さなければならない。
+
+    初手が自軍の場合には敵軍の直前の操作は存在しないので、opponent_last_op は Optional にしている。
+    """
+    # 自軍の直前の操作が攻撃だった場合
+    if last_my_op.is_attack():
+        response = last_my_op.detail.resp
+        assert response is not None
+
+        # 自軍の攻撃が当たって死んだ場合は、そのマスにはもう敵艦は存在しない。マーク位置の敵艦が消えた & 他の敵艦の位置は分からないので None。
+        if response is Response.Dead:
+            return None
+
+        # 自軍の攻撃が当たってまだ生きている場合は、そのマスに敵艦が確実にいるのでマークする。
+        if response is Response.Hit:
+            return last_my_op.detail.attack_pos
+
+        # 以下の流れで自軍の攻撃が当たらなかった場合 (response が Near または Nothing の場合)。
+        #    1. マーク位置がある
+        #    2. 敵艦が移動
+        #    3. 敵艦の移動先ではなくもとのマーク位置に自軍が攻撃する -> 当たらなかった
+        # この場合、敵の移動はフェイントではなかった。移動先に敵艦が確実に存在するのでマーク。
+        if (current_tracking_cell is not None) and (last_opponent_op is not None) and last_opponent_op.is_move():
+            y, x = current_tracking_cell
+            dirY = last_opponent_op.detail.dirY
+            dirX = last_opponent_op.detail.dirX
+            return Pos(y + dirY, x + dirX)
+
+        # 自軍の攻撃が当たらなかったけど敵の位置が明らかで移動していないならもとのマーク位置をそのまま返す。
+        if (current_tracking_cell is not None) and (last_opponent_op is not None) and (not last_opponent_op.is_move()):
+            return current_tracking_cell
+
+        # 敵艦の確実な位置がわからないので None
+        return None
+    # -------- END OF `if my_last_op.is_attack()` ----------
+    # 以下、自軍の直前操作が攻撃ではない場合:
+
+    # 敵艦の位置が明らかで、なおかつ敵が移動していない場合は 追跡中のセル位置をそのまま返す。
+    if (current_tracking_cell is not None) and (not last_opponent_op.is_move()):
+        return current_tracking_cell
+
+    # 敵艦の確実な位置がわからないので None
+    return None

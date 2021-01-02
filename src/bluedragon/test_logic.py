@@ -126,3 +126,57 @@ class TestUpdateProb(TestCase):
         print("--------- move after ------------")
         print(m)
         self.assertAlmostEqual(4.0, m.sum())
+
+    def test__calculate_next_tracking_cell_01(self):
+        # 各要素: (current_tracking_cell, last_my_op, last_opponent_op, expected_tracking_cell)
+        p0 = Pos(2, 2)
+        p1 = Pos(4, 4)
+
+        move_right = OpInfo(MoveInfo(None, dirY=0, dirX=2))
+        attack = OpInfo(AttackInfo(attack_pos=p1, resp=None))
+        attack_hit = OpInfo(AttackInfo(attack_pos=p1, resp=Response.Hit))
+        attack_dead = OpInfo(AttackInfo(attack_pos=p1, resp=Response.Dead))
+        attack_near = OpInfo(AttackInfo(attack_pos=p1, resp=Response.Near))
+        attack_nothing = OpInfo(AttackInfo(attack_pos=p1, resp=Response.Nothing))
+
+        testcases = [
+            (p0, move_right, move_right, None),
+            (p0, move_right, attack, p0),
+
+            (p0, attack_hit, move_right, attack_hit.detail.attack_pos),
+            (p0, attack_hit, attack, attack_hit.detail.attack_pos),
+
+            (p0, attack_dead, move_right, None),
+            (p0, attack_dead, attack, None),
+
+            (p0, attack_near, move_right, Pos(p0.row + move_right.detail.dirY, p0.col + move_right.detail.dirX)),
+            (p0, attack_near, attack, p0),
+
+            (p0, attack_nothing, move_right, Pos(p0.row + move_right.detail.dirY, p0.col + move_right.detail.dirX)),
+            (p0, attack_nothing, attack, p0),
+
+            (None, move_right, move_right, None),
+            (None, move_right, attack, None),
+
+            (None, attack_hit, move_right, attack_hit.detail.attack_pos),
+            (None, attack_hit, attack, attack_hit.detail.attack_pos),
+
+            (None, attack_dead, move_right, None),
+            (None, attack_dead, attack, None),
+
+            (None, attack_near, move_right, None),
+            (None, attack_near, attack, None),
+
+            (None, attack_nothing, move_right, None),
+            (None, attack_nothing, attack, None),
+        ]
+
+        for cur_tracking_cell, last_my_op, last_opponent_op, expected in testcases:
+            actual = logic._calculate_next_tracking_cell(cur_tracking_cell, last_my_op, last_opponent_op)
+            print("--------------------------------------------")
+            print("cur_tracking_cell:", cur_tracking_cell)
+            print("last_my_op:", last_my_op)
+            print("last_opponent_op:", last_opponent_op)
+            print("expected:", expected)
+            print("actual: ", actual)
+            self.assertEqual(expected, actual)
