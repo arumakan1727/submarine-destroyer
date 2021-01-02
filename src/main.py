@@ -6,6 +6,9 @@ from bluedragon import model
 
 
 def main():
+    # ウェイ
+    io.print_title()
+
     # 初手・後手の入力
     io.newline()
     is_me_first = io.ask_yesno("Is my team first? [y/n]: ")
@@ -56,7 +59,7 @@ def main():
             opponent_turn()
 
         is_current_my_turn = not is_current_my_turn
-        io.dump_my_grid(battle_data)
+        io.dump_battle_data(battle_data)
 
     io.newline()
     if battle_data.my_alive_count <= 0:

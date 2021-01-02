@@ -1,7 +1,5 @@
 from typing import Any
 
-import numpy as np
-
 from .model import OpInfo, AttackInfo, MoveInfo, Response, BattleData
 from .traits import Pos
 from .traits import ROW, COL
@@ -10,7 +8,7 @@ from .traits import ROW, COL
 class Color:
     HEADER = '\033[95m'
     OK_BLUE = '\033[94m'
-    OK_CYAN = '\033[96m'
+    INFO_CYAN = '\033[96m'
     OK_GREEN = '\033[92m'
     WARNING = '\033[93m'
     FAIL = '\033[91m'
@@ -20,7 +18,7 @@ class Color:
 
 
 def info(msg: Any, end='\n'):
-    print(Color.OK_CYAN + Color.BOLD + "[Info] " + Color.END + str(msg), end=end)
+    print(Color.INFO_CYAN + Color.BOLD + "[Info] " + Color.END + str(msg), end=end)
 
 
 def success(msg: Any, end='\n'):
@@ -61,7 +59,8 @@ def newline():
     print()
 
 
-def show_grid(grid: np.ndarray):
+def dump_my_grid(data: BattleData):
+    grid = data.my_grid
     print(Color.HEADER + "   1  2  3  4  5" + Color.END)
     for row in range(ROW):
         print(Color.HEADER + chr(ord('A') + row) + Color.END, end='')
@@ -70,13 +69,32 @@ def show_grid(grid: np.ndarray):
         newline()
 
 
-def dump_my_grid(data: BattleData):
-    newline()
-    show_grid(data.my_grid)
-    print(Color.OK_CYAN + "Positions: " + Color.END, end='')
+def dump_my_submarine_pos_codes(data: BattleData):
+    print(Color.INFO_CYAN + "自軍の潜水艦の位置: " + Color.END, end='')
     for pos in data.set_of_my_submarine_positions():
         print(pos.code(), end=' ')
     newline()
+
+
+def dump_battle_data(data: BattleData):
+    newline()
+    print("--------- Battle Data ---------")
+    # 確率グリッドの表示
+    print(data.prob)
+
+    # 自軍の配置グリッドの表示
+    dump_my_grid(data)
+
+    # 自軍の潜水艦の位置の表示
+    dump_my_submarine_pos_codes(data)
+
+    # tracking_cell の表示
+    print(Color.INFO_CYAN + "位置が明らかな敵艦:" + Color.END,
+          "None" if (data.tracking_cell is None) else data.tracking_cell.code())
+
+    # 敵軍の生きている潜水艦数と自軍の生きている潜水艦数 の表示
+    print(Color.INFO_CYAN + "自軍の生き残り艦数:" + Color.END, data.my_alive_count)
+    print(Color.INFO_CYAN + "敵軍の生き残り艦数:" + Color.END, data.opponent_alive_count)
 
 
 def read_response() -> Response:
@@ -165,3 +183,20 @@ def read_opponent_op() -> OpInfo:
         if s == "move":
             return read_move_info()
         fail("Invalid input")
+
+
+def print_title():
+    print(r"""
+ ____        _                          _
+/ ___| _   _| |__  _ __ ___   __ _ _ __(_)_ __   ___
+\___ \| | | | '_ \| '_ ` _ \ / _` | '__| | '_ \ / _ \
+ ___) | |_| | |_) | | | | | | (_| | |  | | | | |  __/
+|____/ \__,_|_.__/|_| |_| |_|\__,_|_|  |_|_| |_|\___|
+
+ ____            _
+|  _ \  ___  ___| |_ _ __ ___  _   _  ___ _ __
+| | | |/ _ \/ __| __| '__/ _ \| | | |/ _ \ '__|
+| |_| |  __/\__ \ |_| | | (_) | |_| |  __/ |
+|____/ \___||___/\__|_|  \___/ \__, |\___|_|
+                               |___/
+""")
