@@ -108,3 +108,21 @@ class TestUpdateProb(TestCase):
         print(m)
         self.assertAlmostEqual(4, m.sum())
         self.assertEqual(1, m[pX.row, pX.col])
+
+    def test__update_prob_for_opponent_move_01(self):
+        m = create_initial_prob_grid(4)
+        logic._update_prob_for_opponent_move(m, MoveInfo(fromPos=None, dirY=2, dirX=0))
+        self.assertAlmostEqual(4.0, m.sum())
+
+    def test__update_prob_for_opponent_move_02(self):
+        m = create_initial_prob_grid(4)
+        logic._update_prob_for_my_attack_near(m, Pos(2, 2), 4)
+        logic._update_prob_for_my_attack_near(m, Pos(3, 0), 4)
+        logic._update_prob_for_my_attack_near(m, Pos(3, 2), 4)
+        print("--------- move before ------------")
+        print(m)
+
+        logic._update_prob_for_opponent_move(m, MoveInfo(fromPos=None, dirY=2, dirX=0))
+        print("--------- move after ------------")
+        print(m)
+        self.assertAlmostEqual(4.0, m.sum())
