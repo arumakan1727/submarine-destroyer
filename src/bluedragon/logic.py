@@ -283,8 +283,8 @@ def _update_prob_for_opponent_move(prob: np.ndarray, moving_info: MoveInfo) -> N
     敵が移動した場合の確率グリッド更新処理。
     各マスの確率値を少し移動させる。 確率値が0や1のマスに対して特別処理を行うことはしない。
     """
-    dirX = moving_info.dirY
-    dirY = moving_info.dirX
+    dirY = moving_info.dirY
+    dirX = moving_info.dirX
     from_cells = [
         Pos(y, x)
         for y in range(ROW) for x in range(COL)
