@@ -175,7 +175,7 @@ def _set_of_zero_cells(prob: np.ndarray) -> Set[Pos]:
     return set(
         Pos(y, x)
         for y in range(0, ROW) for x in range(0, COL)
-        if math.isclose(prob[y, x], 0, abs_tol=1e-10)
+        if math.isclose(prob[y, x], 0, abs_tol=1e-7)
     )
 
 
@@ -183,7 +183,7 @@ def _set_of_cells_greater_eq_one(prob: np.ndarray) -> Set[Pos]:
     return set(
         Pos(y, x)
         for y in range(0, ROW) for x in range(0, COL)
-        if prob[y, x] >= (1.0 - 1e-10)
+        if prob[y, x] >= (1.0 - 1e-7)
     )
 
 
@@ -214,13 +214,15 @@ def _suck_one_submarine_prob(prob: np.ndarray, source_candidates: Set[Pos], oppo
     """
     N = opponent_alive_count
     k = len(_set_of_cells_greater_eq_one(prob))
+    if k == N:
+        return 0
     sources = source_candidates - _set_of_zero_union_greater_eq_one(prob)
     prob_sum = 0
     for y, x in sources:
         v = prob[y, x] * (1 / (N - k))
         prob[y, x] -= v
         prob_sum += v
-    assert math.isclose(1.0, prob_sum)
+    assert math.isclose(1.0, prob_sum, rel_tol=1e-7)
     return prob_sum
 
 
@@ -248,7 +250,7 @@ def _update_prob_for_my_attack_dead(prob: np.ndarray, dead_pos: Pos, opponent_al
     """
     _update_prob_for_my_attack_hit(prob, dead_pos, opponent_alive_count)
     prob[dead_pos.row, dead_pos.col] = 0.0
-    assert math.isclose(np.sum(prob), opponent_alive_count - 1)  # 全マスの確率の総和は敵軍の(死んだ後の)隻数に等しいはず
+    assert math.isclose(np.sum(prob), opponent_alive_count - 1, rel_tol=1e-7)  # 全マスの確率の総和は敵軍の(死んだ後の)隻数に等しいはず
 
 
 def _update_prob_for_my_attack_near(prob: np.ndarray, attacked_pos: Pos, opponent_alive_count: int) -> None:
