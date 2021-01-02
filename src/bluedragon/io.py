@@ -16,6 +16,26 @@ class Color:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+    @staticmethod
+    def magenta(s: Any) -> str:
+        return Color.HEADER + str(s) + Color.END
+
+    @staticmethod
+    def cyan(s: Any) -> str:
+        return Color.INFO_CYAN + str(s) + Color.END
+
+    @staticmethod
+    def green(s: Any) -> str:
+        return Color.OK_GREEN + str(s) + Color.END
+
+    @staticmethod
+    def yellow(s: Any) -> str:
+        return Color.WARNING + str(s) + Color.END
+
+    @staticmethod
+    def red(s: Any) -> str:
+        return Color.FAIL + str(s) + Color.END
+
 
 def info(msg: Any, end='\n'):
     print(Color.INFO_CYAN + Color.BOLD + "[Info] " + Color.END + str(msg), end=end)
@@ -99,7 +119,7 @@ def dump_battle_data(data: BattleData):
 
 def read_response() -> Response:
     while True:
-        print("How was the response of attack? [hit/dead/near/none]: ", end='')
+        print("自軍が攻撃しました。敵軍からのレスポンスを入力してください [hit/dead/near/none]: ", end='')
         s = input().strip().lower()
         if s == "hit":
             return Response.Hit
@@ -176,7 +196,7 @@ def read_move_info() -> OpInfo:
 
 def read_opponent_op() -> OpInfo:
     while True:
-        print("Which is the opponent's action? [attack/move]: ", end='')
+        print("敵の行動を入力してください [attack/move]: ", end='')
         s = input().strip().lower()
         if s == "attack":
             return read_attack_info()
