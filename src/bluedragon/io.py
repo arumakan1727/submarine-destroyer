@@ -96,17 +96,18 @@ def dump_my_submarine_pos_codes(data: BattleData):
     newline()
 
 
-def dump_battle_data(data: BattleData):
+def dump_battle_data(data: BattleData, should_show_my_positions: bool):
     newline()
     print("--------- Battle Data ---------")
     # 確率グリッドの表示
     print(data.prob)
 
-    # 自軍の配置グリッドの表示
-    dump_my_grid(data)
+    if should_show_my_positions:
+        # 自軍の配置グリッドの表示
+        dump_my_grid(data)
 
-    # 自軍の潜水艦の位置の表示
-    dump_my_submarine_pos_codes(data)
+        # 自軍の潜水艦の位置の表示
+        dump_my_submarine_pos_codes(data)
 
     # tracking_cell の表示
     print(Color.INFO_CYAN + "位置が明らかな敵艦:" + Color.END,

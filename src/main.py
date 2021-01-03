@@ -1,13 +1,22 @@
 #!/usr/bin/env python3
+import sys
+from typing import List
 
 from bluedragon import io
 from bluedragon import logic
 from bluedragon import model
 
 
-def main():
+def main(argv: List[str]):
     # ウェイ
     io.print_title()
+
+    if "-q" in argv:
+        io.success("`-q` オプションが付与されたので自軍の配置の表示を抑制します。")
+        should_show_my_positions = False
+    else:
+        io.info("Hint: `-q` オプションをつけて実行すると自軍の配置の表示を抑制できます。")
+        should_show_my_positions = True
 
     # 初手・後手の入力
     io.newline()
@@ -18,7 +27,8 @@ def main():
     logic.initialize_my_placement(battle_data)
 
     # 初期配置の表示
-    io.dump_my_grid(battle_data)
+    if should_show_my_positions:
+        io.dump_my_grid(battle_data)
 
     def my_turn():
         # 自軍の操作を計算させて取得, 表示, battle_data に反映
@@ -66,7 +76,7 @@ def main():
         input()
 
         is_current_my_turn = not is_current_my_turn
-        io.dump_battle_data(battle_data)
+        io.dump_battle_data(battle_data, should_show_my_positions)
 
     io.newline()
     if battle_data.my_alive_count <= 0:
@@ -77,4 +87,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)
