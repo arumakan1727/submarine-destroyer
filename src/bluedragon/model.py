@@ -64,7 +64,7 @@ class OpInfo(NamedTuple):
         if self.is_move():
             info = self.detail
             return "Move(from: %s, dir: %s, dist: %d)" % (
-                info.fromPos.code() if info.fromPos is not None else "-None-",
+                info.fromPos.code() if info.fromPos is not None else "None",
                 info.dir_str(),
                 info.moving_distance())
 
