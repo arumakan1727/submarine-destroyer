@@ -120,15 +120,15 @@ def dump_battle_data(data: BattleData, should_show_my_positions: bool):
 
 def read_response() -> Response:
     while True:
-        print("自軍が攻撃しました。敵軍からのレスポンスを入力してください [hit/dead/near/none]: ", end='')
+        print("自軍が攻撃しました。敵軍からのレスポンスを入力してください [Hit/Dead/Near/X]: ", end='')
         s = input().strip().lower()
-        if s == "hit":
+        if "hit".startswith(s):
             return Response.Hit
-        if s == "dead":
+        if "dead".startswith(s):
             return Response.Dead
-        if s == "near":
+        if "near".startswith(s):
             return Response.Near
-        if s == "none":
+        if s == "x":
             return Response.Nothing
         fail("Invalid input.")
 
@@ -176,6 +176,8 @@ def read_move_info() -> OpInfo:
             fail("Please split with WHITE_SPACE.")
             continue
 
+        direction = direction.upper()
+
         if direction not in ['L', 'U', 'D', 'R']:
             fail("Direction must be one of [U/D/L/R]: " + direction)
             continue
@@ -197,11 +199,11 @@ def read_move_info() -> OpInfo:
 
 def read_opponent_op() -> OpInfo:
     while True:
-        print("敵の行動を入力してください [attack/move]: ", end='')
+        print("敵の行動を入力してください [Attack/Move]: ", end='')
         s = input().strip().lower()
-        if s == "attack":
+        if "attack".startswith(s):
             return read_attack_info()
-        if s == "move":
+        if "move".startswith(s):
             return read_move_info()
         fail("Invalid input")
 
