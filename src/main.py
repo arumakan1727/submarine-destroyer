@@ -49,13 +49,17 @@ def main():
     # 現在が自軍のターンなら True。 ループ毎にトグルする。
     is_current_my_turn = is_me_first
 
+    # ターン数
+    turn_count = 0
+
     # 自軍・敵軍のどちらかの潜水艦の数が 0 になるまでループを続ける
     while not battle_data.has_game_finished():
+        turn_count += 1
         if is_current_my_turn:
-            print("\n---------------------- My turn ----------------------")
+            print("\n---------------------- [Turn%02d] My turn ----------------------" % turn_count)
             my_turn()
         else:
-            print("\n------------------- Opponent turn -------------------")
+            print("\n------------------- [Turn%02d] Opponent turn -------------------" % turn_count)
             opponent_turn()
 
         print("次へ進むにはEnterを押してください。", end='')

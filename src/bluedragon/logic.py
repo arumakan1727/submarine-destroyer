@@ -101,21 +101,29 @@ def update_tracking_cell(data: BattleData) -> None:
     last_my_op = data.my_history[-1]
     last_opponent_op = None if len(data.opponent_history) <= 0 else data.opponent_history[-1]
 
-    # 位置が明らか かつ 敵が1艦しかいない場合
-    if (current_tracking_cell is not None) and (data.opponent_alive_count == 1):
+    # 敵が1艦になったばかりではない かつ 位置が明らか かつ 敵が1艦しかいない場合
+    if not (last_my_op.is_attack() and last_my_op.detail.resp is Response.Dead) and (
+            current_tracking_cell is not None) and (data.opponent_alive_count == 1):
         if last_opponent_op.is_move():
             sy, sx = current_tracking_cell
             dirY = last_opponent_op.detail.dirY
             dirX = last_opponent_op.detail.dirX
             data.tracking_cell = Pos(sy + dirY, sx + dirX)
+            io.info("敵の位置が明らか かつ 敵が1艦しかいない 状態で敵が移動しました。 tracking_cell を移動先の %s にします。" %
+                    data.tracking_cell.code())
             return
         else:
+            io.info("敵の位置が明らか かつ 敵が1艦しかいない 状態で敵は移動していません。 tracking_cell はそのまま %s を維持します。" %
+                    data.tracking_cell.code())
             return
 
     data.tracking_cell = _calculate_next_tracking_cell(
         current_tracking_cell,
         last_my_op=last_my_op,
         last_opponent_op=last_opponent_op)
+
+    if data.tracking_cell is not None:
+        _update_prob_for_my_attack_hit(data.prob, data.tracking_cell, data.opponent_alive_count)
 
 
 def suggest_my_op(data: BattleData) -> OpInfo:
@@ -195,7 +203,7 @@ def suggest_my_op(data: BattleData) -> OpInfo:
         dest = min(data.set_of_my_movable_cells(actor),
                    key=lambda p: (
                        999 if (p == true_highest_prob_cell)
-                       else abs(true_highest_prob_cell.row - p.row) + abs(true_highest_prob_cell.col + p.col)))
+                       else abs(true_highest_prob_cell.row - p.row) + abs(true_highest_prob_cell.col - p.col)))
         io.info("確率最高セルへ向けて自軍を %s から %s へ移動させます" % (actor.code(), dest.code()))
         return OpInfo(MoveInfo(fromPos=actor, dirY=dest.row - actor.row, dirX=dest.col - actor.col))
 
@@ -245,7 +253,7 @@ def suggest_my_op(data: BattleData) -> OpInfo:
     if data.my_alive_count <= 2 and randint(0, 99) < 50:
         actor = choice(list(data.set_of_my_submarine_positions()))
         dest = choice(list(data.set_of_my_movable_cells(actor)))
-        io.info("自軍の数が2以下の場合は5割の確率でランダムに移動します...選ばれたのは移動でした (%s -> %s)。" %
+        io.info("確率が高いマスが見当たらず自軍の数が2以下の場合は5割の確率でランダムに移動します...選ばれたのは移動でした (%s -> %s)。" %
                 (actor.code(), dest.code()))
         return OpInfo(MoveInfo(fromPos=actor, dirY=dest.row - actor.row, dirX=dest.col - actor.col))
 
@@ -271,11 +279,29 @@ def initialize_my_placement(data: BattleData) -> None:
 
         # 案2
         [
-            [X, 0, 0, 0, 0],
-            [0, 0, 0, X, 0],
             [0, 0, 0, 0, 0],
-            [0, X, 0, 0, 0],
-            [0, 0, 0, 0, X],
+            [X, 0, X, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, X, 0, 0, X],
+            [0, 0, 0, 0, 0],
+        ],
+
+        # 案3
+        [
+            [0, 0, 0, X, 0],
+            [X, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, X, 0, 0, X],
+            [0, 0, 0, 0, 0],
+        ],
+
+        # 案5
+        [
+            [0, 0, 0, 0, 0],
+            [0, 0, X, 0, 0],
+            [X, 0, 0, 0, X],
+            [0, 0, X, 0, 0],
+            [0, 0, 0, 0, 0],
         ],
     ]
 
@@ -289,15 +315,15 @@ def initialize_my_placement(data: BattleData) -> None:
                 hp_sum += cell
         assert hp_sum == (INITIAL_HP * INITIAL_SUBMARINE_COUNT)
 
-    io.info("Validating initial placement candidates...")
+    io.info("%d 個の初期配置候補を validate しています..." % len(candidates))
     for mat in candidates:
         validate(mat)
-    io.success("All candidates are OK.")
+    io.success("どの初期配置候補も不正はありませんでした。")
 
     # TODO selectID は乱数にするか定数にするか
     candidate_id = randint(0, len(candidates) - 1)
 
-    io.info("Candidate ID is: %d" % candidate_id)
+    io.info("候補のうち %d 番目 (0-indexed) の初期配置を選択します。" % candidate_id)
     data.my_grid = np.array(candidates[candidate_id])
 
 
@@ -396,16 +422,16 @@ def _update_prob_for_my_attack_near(prob: np.ndarray, attacked_pos: Pos, opponen
     """
     自軍の攻撃が波高しだった用の確率グリッド更新処理。
     """
-    # もし波高しの周囲に、位置が明らかな敵艦が存在する場合は何もしない。
-    if len(set_of_around_cells(attacked_pos) & _set_of_cells_greater_eq_one(prob)) > 0:
-        return
-
     # もし敵が攻撃してきた位置が既に確率ゼロなら何もしない。
     if math.isclose(0.0, prob[attacked_pos.row, attacked_pos.col], abs_tol=1e-7):
         return
 
     # 攻撃マスの確率をゼロにして他のマスへ分散 (ヒットはしてないので攻撃した位置には確実に居ない)
     _suck_spot_and_distribute_prob(prob, attacked_pos)
+
+    # もし波高しの周囲に、位置が明らかな敵艦が存在する場合は何もしない。
+    if len(set_of_around_cells(attacked_pos) & _set_of_cells_greater_eq_one(prob)) > 0:
+        return
 
     # 1隻分の確率を各マスから奪って波高しの周囲マスに分配
     # !!! destinations は suck する前に得ること！
@@ -450,7 +476,6 @@ def _update_prob_for_opponent_move(prob: np.ndarray, moving_info: MoveInfo) -> N
         if is_within_area(Pos(y + dirY, x + dirX))
     ]
     prob_sum = sum(prob[y, x] for y, x in from_cells)
-    io.info("_update_prob_for_opponent_move: prob_sum=" + str(prob_sum))
 
     # 移動元の確率の総和がゼロならこれ以上何もしない。
     # (あとの処理で prob_sum で割るためゼロ除算を避ける)
@@ -481,6 +506,11 @@ def _calculate_next_tracking_cell(
 
     初手が自軍の場合には敵軍の直前の操作は存在しないので、opponent_last_op は Optional にしている。
     """
+    io.info("更新前の敵艦予想位置: %s, 自軍の直前の操作: %s, 敵の直前の操作: %s" %
+            (current_tracking_cell.code() if (current_tracking_cell is not None) else "None",
+             str(last_my_op),
+             str(last_opponent_op)))
+
     # 自軍の直前の操作が攻撃だった場合
     if last_my_op.is_attack():
         response = last_my_op.detail.resp
@@ -488,25 +518,39 @@ def _calculate_next_tracking_cell(
 
         # 自軍の攻撃が当たって死んだ場合は、そのマスにはもう敵艦は存在しない。マーク位置の敵艦が消えた & 他の敵艦の位置は分からないので None。
         if response is Response.Dead:
+            io.info("自軍の攻撃が当たって消えたので tracking_cell を %s にします。" % None)
             return None
 
         # 自軍の攻撃が当たってまだ生きている場合は、そのマスに敵艦が確実にいるのでマークする。
         if response is Response.Hit:
+            io.info("自軍の攻撃が当たってまだ敵が生きているので tracking_cell を命中位置の %s にします。" %
+                    last_my_op.detail.attack_pos.code())
             return last_my_op.detail.attack_pos
 
         # 以下の流れで自軍の攻撃が当たらなかった場合 (response が Near または Nothing の場合)。
         #    1. マーク位置がある
         #    2. 敵艦が移動
-        #    3. 敵艦の移動先ではなくもとのマーク位置に自軍が攻撃する -> 当たらなかった
-        # この場合、敵の移動はフェイントではなかった。移動先に敵艦が確実に存在するのでマーク。
         if (current_tracking_cell is not None) and (last_opponent_op is not None) and last_opponent_op.is_move():
-            y, x = current_tracking_cell
-            dirY = last_opponent_op.detail.dirY
-            dirX = last_opponent_op.detail.dirX
-            return Pos(y + dirY, x + dirX)
+            my_attacked_pos = last_my_op.detail.attack_pos
+            # 自軍は敵の移動に追従せずもとの位置に撃ったが、当たらなかったので敵の移動はフェイントでは無かった。移動先に敵艦が確実にいる。
+            if my_attacked_pos == current_tracking_cell:
+                y, x = current_tracking_cell
+                dirY = last_opponent_op.detail.dirY
+                dirX = last_opponent_op.detail.dirX
+                ret = Pos(y + dirY, x + dirX)
+                io.info("敵の移動に追従ぜず もとの位置に撃ったものの命中しませんでした。")
+                io.info("敵の移動はフェイントではなかったので tracking_cell を敵の移動に従って %s -> %s にします。" %
+                        (current_tracking_cell.code(), ret.code()))
+                return ret
+            # 自軍は敵の移動に追従して撃ったが、当たらなかったので敵の移動はフェイントだった。もとの位置に敵艦が確実にいる。
+            else:
+                io.info("敵の移動に追従して 移動先に撃ったものの命中しませんでした。")
+                io.info("敵の移動はフェイントだったので tracking_cell をもとの位置 %s にします。" % current_tracking_cell.code())
+                return current_tracking_cell
 
         # 自軍の攻撃が当たらなかったけど敵の位置が明らかで移動していないならもとのマーク位置をそのまま返す。
         if (current_tracking_cell is not None) and (last_opponent_op is not None) and (not last_opponent_op.is_move()):
+            io.info("自軍の攻撃は当たらなかったものの直前の敵の位置が明らかで敵は移動していないので、 tracking_cell は維持します。")
             return current_tracking_cell
 
         # 敵艦の確実な位置がわからないので None
