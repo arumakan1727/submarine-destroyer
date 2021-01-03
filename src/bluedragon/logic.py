@@ -195,7 +195,7 @@ def suggest_my_op(data: BattleData) -> OpInfo:
         dest = min(data.set_of_my_movable_cells(actor),
                    key=lambda p: (
                        999 if (p == true_highest_prob_cell)
-                       else abs(true_highest_prob_cell.row - p.row) + abs(true_highest_prob_cell.col + p.col)))
+                       else abs(true_highest_prob_cell.row - p.row) + abs(true_highest_prob_cell.col - p.col)))
         io.info("確率最高セルへ向けて自軍を %s から %s へ移動させます" % (actor.code(), dest.code()))
         return OpInfo(MoveInfo(fromPos=actor, dirY=dest.row - actor.row, dirX=dest.col - actor.col))
 
