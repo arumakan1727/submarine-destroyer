@@ -117,6 +117,9 @@ def update_tracking_cell(data: BattleData) -> None:
         last_my_op=last_my_op,
         last_opponent_op=last_opponent_op)
 
+    if data.tracking_cell is not None:
+        _update_prob_for_my_attack_hit(data.prob, data.tracking_cell, data.opponent_alive_count)
+
 
 def suggest_my_op(data: BattleData) -> OpInfo:
     """
@@ -245,7 +248,7 @@ def suggest_my_op(data: BattleData) -> OpInfo:
     if data.my_alive_count <= 2 and randint(0, 99) < 50:
         actor = choice(list(data.set_of_my_submarine_positions()))
         dest = choice(list(data.set_of_my_movable_cells(actor)))
-        io.info("自軍の数が2以下の場合は5割の確率でランダムに移動します...選ばれたのは移動でした (%s -> %s)。" %
+        io.info("確率が高いマスが見当たらず自軍の数が2以下の場合は5割の確率でランダムに移動します...選ばれたのは移動でした (%s -> %s)。" %
                 (actor.code(), dest.code()))
         return OpInfo(MoveInfo(fromPos=actor, dirY=dest.row - actor.row, dirX=dest.col - actor.col))
 
