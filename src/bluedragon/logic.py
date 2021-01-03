@@ -498,6 +498,11 @@ def _calculate_next_tracking_cell(
 
     初手が自軍の場合には敵軍の直前の操作は存在しないので、opponent_last_op は Optional にしている。
     """
+    io.info("更新前の敵艦予想位置: %s, 自軍の直前の操作: %s, 敵の直前の操作: %s" %
+            (current_tracking_cell.code() if (current_tracking_cell is not None) else "None",
+             str(last_my_op),
+             str(last_opponent_op)))
+
     # 自軍の直前の操作が攻撃だった場合
     if last_my_op.is_attack():
         response = last_my_op.detail.resp
@@ -505,25 +510,39 @@ def _calculate_next_tracking_cell(
 
         # 自軍の攻撃が当たって死んだ場合は、そのマスにはもう敵艦は存在しない。マーク位置の敵艦が消えた & 他の敵艦の位置は分からないので None。
         if response is Response.Dead:
+            io.info("自軍の攻撃が当たって消えたので tracking_cell を %s にします。" % None)
             return None
 
         # 自軍の攻撃が当たってまだ生きている場合は、そのマスに敵艦が確実にいるのでマークする。
         if response is Response.Hit:
+            io.info("自軍の攻撃が当たってまだ敵が生きているので tracking_cell を命中位置の %s にします。" %
+                    last_my_op.detail.attack_pos.code())
             return last_my_op.detail.attack_pos
 
         # 以下の流れで自軍の攻撃が当たらなかった場合 (response が Near または Nothing の場合)。
         #    1. マーク位置がある
         #    2. 敵艦が移動
-        #    3. 敵艦の移動先ではなくもとのマーク位置に自軍が攻撃する -> 当たらなかった
-        # この場合、敵の移動はフェイントではなかった。移動先に敵艦が確実に存在するのでマーク。
         if (current_tracking_cell is not None) and (last_opponent_op is not None) and last_opponent_op.is_move():
-            y, x = current_tracking_cell
-            dirY = last_opponent_op.detail.dirY
-            dirX = last_opponent_op.detail.dirX
-            return Pos(y + dirY, x + dirX)
+            my_attacked_pos = last_my_op.detail.attack_pos
+            # 自軍は敵の移動に追従せずもとの位置に撃ったが、当たらなかったので敵の移動はフェイントでは無かった。移動先に敵艦が確実にいる。
+            if my_attacked_pos == current_tracking_cell:
+                y, x = current_tracking_cell
+                dirY = last_opponent_op.detail.dirY
+                dirX = last_opponent_op.detail.dirX
+                ret = Pos(y + dirY, x + dirX)
+                io.info("敵の移動に追従ぜず もとの位置に撃ったものの命中しませんでした。")
+                io.info("敵の移動はフェイントではなかったので tracking_cell を敵の移動に従って %s -> %s にします。" %
+                        (current_tracking_cell.code(), ret.code()))
+                return ret
+            # 自軍は敵の移動に追従して撃ったが、当たらなかったので敵の移動はフェイントだった。もとの位置に敵艦が確実にいる。
+            else:
+                io.info("敵の移動に追従して 移動先に撃ったものの命中しませんでした。")
+                io.info("敵の移動はフェイントだったので tracking_cell をもとの位置 %s にします。" % current_tracking_cell.code())
+                return current_tracking_cell
 
         # 自軍の攻撃が当たらなかったけど敵の位置が明らかで移動していないならもとのマーク位置をそのまま返す。
         if (current_tracking_cell is not None) and (last_opponent_op is not None) and (not last_opponent_op.is_move()):
+            io.info("自軍の攻撃は当たらなかったものの直前の敵の位置が明らかで敵は移動していないので、 tracking_cell は維持します。")
             return current_tracking_cell
 
         # 敵艦の確実な位置がわからないので None

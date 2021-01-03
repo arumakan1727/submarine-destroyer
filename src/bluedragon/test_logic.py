@@ -143,46 +143,77 @@ class TestUpdateProb(TestCase):
 
     def test__calculate_next_tracking_cell_01(self):
         # 各要素: (current_tracking_cell, last_my_op, last_opponent_op, expected_tracking_cell)
-        p0 = Pos(2, 2)
-        p1 = Pos(4, 4)
-
+        p0 = Pos(0, 0)
+        p1 = Pos(0, 2)  # p1 から右へ 2 マス
         move_right = OpInfo(MoveInfo(None, dirY=0, dirX=2))
+
         attack = OpInfo(AttackInfo(attack_pos=p1, resp=None))
-        attack_hit = OpInfo(AttackInfo(attack_pos=p1, resp=Response.Hit))
-        attack_dead = OpInfo(AttackInfo(attack_pos=p1, resp=Response.Dead))
-        attack_near = OpInfo(AttackInfo(attack_pos=p1, resp=Response.Near))
-        attack_nothing = OpInfo(AttackInfo(attack_pos=p1, resp=Response.Nothing))
+        attack_moved_hit = OpInfo(AttackInfo(attack_pos=p1, resp=Response.Hit))
+        attack_moved_dead = OpInfo(AttackInfo(attack_pos=p1, resp=Response.Dead))
+        attack_moved_near = OpInfo(AttackInfo(attack_pos=p1, resp=Response.Near))
+        attack_moved_nothing = OpInfo(AttackInfo(attack_pos=p1, resp=Response.Nothing))
+
+        attack_non_moved_hit = OpInfo(AttackInfo(attack_pos=p0, resp=Response.Hit))
+        attack_non_moved_dead = OpInfo(AttackInfo(attack_pos=p0, resp=Response.Dead))
+        attack_non_moved_near = OpInfo(AttackInfo(attack_pos=p0, resp=Response.Near))
+        attack_non_moved_nothing = OpInfo(AttackInfo(attack_pos=p0, resp=Response.Nothing))
 
         testcases = [
             (p0, move_right, move_right, None),
             (p0, move_right, attack, p0),
 
-            (p0, attack_hit, move_right, attack_hit.detail.attack_pos),
-            (p0, attack_hit, attack, attack_hit.detail.attack_pos),
+            (p0, attack_moved_hit, move_right, attack_moved_hit.detail.attack_pos),
+            (p0, attack_moved_hit, attack, attack_moved_hit.detail.attack_pos),
 
-            (p0, attack_dead, move_right, None),
-            (p0, attack_dead, attack, None),
+            (p0, attack_moved_dead, move_right, None),
+            (p0, attack_moved_dead, attack, None),
 
-            (p0, attack_near, move_right, Pos(p0.row + move_right.detail.dirY, p0.col + move_right.detail.dirX)),
-            (p0, attack_near, attack, p0),
+            (p0, attack_moved_near, move_right, p0),
+            (p0, attack_moved_near, attack, p0),
 
-            (p0, attack_nothing, move_right, Pos(p0.row + move_right.detail.dirY, p0.col + move_right.detail.dirX)),
-            (p0, attack_nothing, attack, p0),
+            (p0, attack_moved_nothing, move_right, p0),
+            (p0, attack_moved_nothing, attack, p0),
 
             (None, move_right, move_right, None),
             (None, move_right, attack, None),
 
-            (None, attack_hit, move_right, attack_hit.detail.attack_pos),
-            (None, attack_hit, attack, attack_hit.detail.attack_pos),
+            (None, attack_moved_hit, move_right, attack_moved_hit.detail.attack_pos),
+            (None, attack_moved_hit, attack, attack_moved_hit.detail.attack_pos),
 
-            (None, attack_dead, move_right, None),
-            (None, attack_dead, attack, None),
+            (None, attack_moved_dead, move_right, None),
+            (None, attack_moved_dead, attack, None),
 
-            (None, attack_near, move_right, None),
-            (None, attack_near, attack, None),
+            (None, attack_moved_near, move_right, None),
+            (None, attack_moved_near, attack, None),
 
-            (None, attack_nothing, move_right, None),
-            (None, attack_nothing, attack, None),
+            (None, attack_moved_nothing, move_right, None),
+            (None, attack_moved_nothing, attack, None),
+
+            (p0, attack_non_moved_hit, move_right, attack_non_moved_hit.detail.attack_pos),
+            (p0, attack_non_moved_hit, attack, attack_non_moved_hit.detail.attack_pos),
+
+            (p0, attack_non_moved_dead, move_right, None),
+            (p0, attack_non_moved_dead, attack, None),
+
+            (p0, attack_non_moved_near, move_right,
+             Pos(p0.row + move_right.detail.dirY, p0.col + move_right.detail.dirX)),
+            (p0, attack_non_moved_near, attack, p0),
+
+            (p0, attack_non_moved_nothing, move_right,
+             Pos(p0.row + move_right.detail.dirY, p0.col + move_right.detail.dirX)),
+            (p0, attack_non_moved_nothing, attack, p0),
+
+            (None, attack_non_moved_hit, move_right, attack_non_moved_hit.detail.attack_pos),
+            (None, attack_non_moved_hit, attack, attack_non_moved_hit.detail.attack_pos),
+
+            (None, attack_non_moved_dead, move_right, None),
+            (None, attack_non_moved_dead, attack, None),
+
+            (None, attack_non_moved_near, move_right, None),
+            (None, attack_non_moved_near, attack, None),
+
+            (None, attack_non_moved_nothing, move_right, None),
+            (None, attack_non_moved_nothing, attack, None),
         ]
 
         for cur_tracking_cell, last_my_op, last_opponent_op, expected in testcases:
