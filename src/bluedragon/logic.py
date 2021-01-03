@@ -271,11 +271,29 @@ def initialize_my_placement(data: BattleData) -> None:
 
         # 案2
         [
-            [X, 0, 0, 0, 0],
-            [0, 0, 0, X, 0],
             [0, 0, 0, 0, 0],
-            [0, X, 0, 0, 0],
-            [0, 0, 0, 0, X],
+            [X, 0, X, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, X, 0, 0, X],
+            [0, 0, 0, 0, 0],
+        ],
+
+        # 案3
+        [
+            [0, 0, 0, X, 0],
+            [X, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, X, 0, 0, X],
+            [0, 0, 0, 0, 0],
+        ],
+
+        # 案5
+        [
+            [0, 0, 0, 0, 0],
+            [0, 0, X, 0, 0],
+            [X, 0, 0, 0, X],
+            [0, 0, X, 0, 0],
+            [0, 0, 0, 0, 0],
         ],
     ]
 
@@ -289,15 +307,15 @@ def initialize_my_placement(data: BattleData) -> None:
                 hp_sum += cell
         assert hp_sum == (INITIAL_HP * INITIAL_SUBMARINE_COUNT)
 
-    io.info("Validating initial placement candidates...")
+    io.info("%d 個の初期配置候補を validate しています..." % len(candidates))
     for mat in candidates:
         validate(mat)
-    io.success("All candidates are OK.")
+    io.success("どの初期配置候補も不正はありませんでした。")
 
     # TODO selectID は乱数にするか定数にするか
     candidate_id = randint(0, len(candidates) - 1)
 
-    io.info("Candidate ID is: %d" % candidate_id)
+    io.info("候補のうち %d 番目 (0-indexed) の初期配置を選択します。" % candidate_id)
     data.my_grid = np.array(candidates[candidate_id])
 
 
@@ -450,7 +468,6 @@ def _update_prob_for_opponent_move(prob: np.ndarray, moving_info: MoveInfo) -> N
         if is_within_area(Pos(y + dirY, x + dirX))
     ]
     prob_sum = sum(prob[y, x] for y, x in from_cells)
-    io.info("_update_prob_for_opponent_move: prob_sum=" + str(prob_sum))
 
     # 移動元の確率の総和がゼロならこれ以上何もしない。
     # (あとの処理で prob_sum で割るためゼロ除算を避ける)

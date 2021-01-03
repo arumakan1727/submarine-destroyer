@@ -161,13 +161,13 @@ def read_cell_code(message: str) -> Pos:
 
 
 def read_attack_info():
-    p = read_cell_code("Opponent's attack target cell (ex: `E2`): ")
+    p = read_cell_code("敵が攻撃した位置 (ex: `E2`): ")
     return OpInfo(AttackInfo(attack_pos=p))
 
 
 def read_move_info() -> OpInfo:
     while True:
-        print("Opponent's moving direction[U/D/L/R] and distance (ex: `L 1`): ", end='')
+        print("敵の移動方向 [U/D/L/R] と移動距離を空白区切りで (ex: `L 1`): ", end='')
 
         try:
             direction, distance = input().split()
