@@ -422,16 +422,16 @@ def _update_prob_for_my_attack_near(prob: np.ndarray, attacked_pos: Pos, opponen
     """
     自軍の攻撃が波高しだった用の確率グリッド更新処理。
     """
-    # もし波高しの周囲に、位置が明らかな敵艦が存在する場合は何もしない。
-    if len(set_of_around_cells(attacked_pos) & _set_of_cells_greater_eq_one(prob)) > 0:
-        return
-
     # もし敵が攻撃してきた位置が既に確率ゼロなら何もしない。
     if math.isclose(0.0, prob[attacked_pos.row, attacked_pos.col], abs_tol=1e-7):
         return
 
     # 攻撃マスの確率をゼロにして他のマスへ分散 (ヒットはしてないので攻撃した位置には確実に居ない)
     _suck_spot_and_distribute_prob(prob, attacked_pos)
+
+    # もし波高しの周囲に、位置が明らかな敵艦が存在する場合は何もしない。
+    if len(set_of_around_cells(attacked_pos) & _set_of_cells_greater_eq_one(prob)) > 0:
+        return
 
     # 1隻分の確率を各マスから奪って波高しの周囲マスに分配
     # !!! destinations は suck する前に得ること！
