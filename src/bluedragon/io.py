@@ -120,7 +120,7 @@ def dump_battle_data(data: BattleData, should_show_my_positions: bool):
 
 def read_response() -> Response:
     while True:
-        print("自軍が攻撃しました。敵軍からのレスポンスを入力してください [Hit/Dead/Near/X]: ", end='')
+        print("自軍が攻撃しました。敵軍からのレスポンスを入力してください [Dead/Hit/Near/X]: ", end='')
         s = input().strip().lower()
         if "hit".startswith(s):
             return Response.Hit
