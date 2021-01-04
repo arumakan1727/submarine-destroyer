@@ -268,16 +268,6 @@ def initialize_my_placement(data: BattleData) -> None:
     """
     X = INITIAL_HP
     candidates = [
-        # 案1
-        [
-            [0, 0, 0, 0, 0],
-            [0, X, 0, X, 0],
-            [0, 0, 0, 0, 0],
-            [0, X, 0, X, 0],
-            [0, 0, 0, 0, 0],
-        ],
-
-        # 案2
         [
             [0, 0, 0, 0, 0],
             [X, 0, X, 0, 0],
@@ -286,7 +276,6 @@ def initialize_my_placement(data: BattleData) -> None:
             [0, 0, 0, 0, 0],
         ],
 
-        # 案3
         [
             [0, 0, 0, X, 0],
             [X, 0, 0, 0, 0],
@@ -295,7 +284,14 @@ def initialize_my_placement(data: BattleData) -> None:
             [0, 0, 0, 0, 0],
         ],
 
-        # 案5
+        [
+            [0, 0, 0, 0, 0],
+            [0, X, 0, 0, X],
+            [0, 0, 0, 0, 0],
+            [X, 0, 0, X, 0],
+            [0, 0, 0, 0, 0],
+        ],
+
         [
             [0, 0, 0, 0, 0],
             [0, 0, X, 0, 0],
