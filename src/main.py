@@ -33,7 +33,11 @@ def main(argv: List[str]):
     def my_turn():
         # 自軍の操作を計算させて取得, 表示, battle_data に反映
         op = logic.suggest_my_op(battle_data)
-        io.success("自軍の操作: " + io.Color.green(op))
+
+        io.newline()
+        io.success("自軍の操作: " + io.Color.yellow(op))
+        io.newline()
+
         logic.apply_my_op(battle_data, op)
 
         # 攻撃に対する敵軍の反応を入力
@@ -54,7 +58,7 @@ def main(argv: List[str]):
         # 敵軍が攻撃したならそれに対する自軍の反応を表示
         if op.is_attack():
             assert resp_from_me is not None
-            io.success("敵が攻撃しました。 次のレスポンスを伝えてください: " + io.Color.green(resp_from_me))
+            io.success("敵が攻撃しました。 次のレスポンスを伝えてください: " + io.Color.yellow(resp_from_me))
 
     # 現在が自軍のターンなら True。 ループ毎にトグルする。
     is_current_my_turn = is_me_first
