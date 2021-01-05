@@ -207,9 +207,21 @@ def suggest_my_op(data: BattleData) -> OpInfo:
         io.info("確率最高セルへ向けて自軍を %s から %s へ移動させます" % (actor.code(), dest.code()))
         return OpInfo(MoveInfo(fromPos=actor, dirY=dest.row - actor.row, dirX=dest.col - actor.col))
 
-    # TODO 敵の攻撃が命中している場合は、攻撃を食らっているマスの周囲で最も確率が高いマスを攻撃する
-    if (last_opponent_op is not None) and last_opponent_op.is_attack():
-        pass
+    if ((last_opponent_op is not None)
+            and last_opponent_op.is_attack()
+            and last_opponent_op.detail.resp in (Response.Hit, Response.Dead)):
+        attacked_pos = last_opponent_op.detail.attack_pos
+        io.info("敵の攻撃が命中しているので、攻撃を食らっているマス %s の周囲かつ攻撃可能マスで最も確率が高いマスを求めます。" % attacked_pos.code())
+        candidates = set_of_around_cells(attacked_pos) & attackable_cells
+        if len(candidates) <= 0:
+            io.info("攻撃を食らっているマスの周囲に攻撃可能なマスはありませんでした。")
+        else:
+            dest = max(candidates, key=lambda p: data.prob[p.row, p.col])
+            if math.isclose(0, data.prob[dest.row, dest.col], abs_tol=1e-7):
+                io.info("「攻撃を食らっているマスの周囲 && 攻撃可能マス の中で最高確率のマス」の確率が ゼロ なので攻撃しません。")
+            else:
+                io.info("「攻撃を食らっているマスの周囲 && 攻撃可能マス の中で最高確率のマス」である %s を攻撃します。" % dest.code())
+                return OpInfo(AttackInfo(attack_pos=dest))
 
     ######################################################################################################
     # 攻撃可能なマスの中で確率最高値のマスを求める。
