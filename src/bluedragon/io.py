@@ -161,12 +161,12 @@ def read_cell_code(message: str) -> Pos:
         return Pos(row=row, col=col)
 
 
-def read_attack_info():
+def read_attack_info(cur_turn_count: int):
     p = read_cell_code("敵が攻撃した位置 (ex: `E2`): ")
-    return OpInfo(AttackInfo(attack_pos=p))
+    return OpInfo(AttackInfo(attack_pos=p), turn_count=cur_turn_count)
 
 
-def read_move_info() -> OpInfo:
+def read_move_info(cur_turn_count: int) -> OpInfo:
     while True:
         print("敵の移動方向 [U/D/L/R] と移動距離を空白区切りで (ex: `L 1`): ", end='')
 
@@ -188,23 +188,23 @@ def read_move_info() -> OpInfo:
         distance = int(distance)
 
         if direction == 'L':
-            return OpInfo(MoveInfo(fromPos=None, dirY=0, dirX=(-distance)))
+            return OpInfo(MoveInfo(fromPos=None, dirY=0, dirX=(-distance)), turn_count=cur_turn_count)
         if direction == 'R':
-            return OpInfo(MoveInfo(fromPos=None, dirY=0, dirX=(+distance)))
+            return OpInfo(MoveInfo(fromPos=None, dirY=0, dirX=(+distance)), turn_count=cur_turn_count)
         if direction == 'U':
-            return OpInfo(MoveInfo(fromPos=None, dirY=(-distance), dirX=0))
+            return OpInfo(MoveInfo(fromPos=None, dirY=(-distance), dirX=0), turn_count=cur_turn_count)
         if direction == 'D':
-            return OpInfo(MoveInfo(fromPos=None, dirY=(+distance), dirX=0))
+            return OpInfo(MoveInfo(fromPos=None, dirY=(+distance), dirX=0), turn_count=cur_turn_count)
 
 
-def read_opponent_op() -> OpInfo:
+def read_opponent_op(cur_turn_count: int) -> OpInfo:
     while True:
         print("敵の行動を入力してください [Attack/Move]: ", end='')
         s = input().strip().lower()
         if "attack".startswith(s):
-            return read_attack_info()
+            return read_attack_info(cur_turn_count)
         if "move".startswith(s):
-            return read_move_info()
+            return read_move_info(cur_turn_count)
         fail("Invalid input")
 
 

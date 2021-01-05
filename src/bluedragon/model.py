@@ -50,6 +50,7 @@ class OpInfo(NamedTuple):
     OpInfo(AttackInfo(...)) または OpInfo(MoveInfo(...)) のようにして生成する
     """
     detail: Union[AttackInfo, MoveInfo]
+    turn_count: int
 
     def is_attack(self) -> bool:
         return isinstance(self.detail, AttackInfo)
@@ -59,14 +60,15 @@ class OpInfo(NamedTuple):
 
     def __str__(self) -> str:
         if self.is_attack():
-            return "Attack(to: %s)" % self.detail.attack_pos.code()
+            return "Attack(to: %s) [turn%02d]" % (self.detail.attack_pos.code(), self.turn_count)
 
         if self.is_move():
             info = self.detail
-            return "Move(from: %s, dir: %s, dist: %d)" % (
+            return "Move(from: %s, dir: %s, dist: %d) [turn%02d]" % (
                 info.fromPos.code() if info.fromPos is not None else "None",
                 info.dir_str(),
-                info.moving_distance())
+                info.moving_distance(),
+                self.turn_count)
 
         raise Exception("type of `detail` is illegal")
 
@@ -111,12 +113,12 @@ class BattleData:
         敵の移動情報 と 移動後に攻撃が当たったかどうか によって変動する。見失った場合は None になる。
     """
 
-    def __init__(self):
+    def __init__(self, opponent_initial_submarine_count: int):
         self.my_alive_count: int = INITIAL_SUBMARINE_COUNT
-        self.opponent_alive_count: int = INITIAL_SUBMARINE_COUNT
+        self.opponent_alive_count: int = opponent_initial_submarine_count
         self.my_grid: np.ndarray = np.zeros((ROW, COL), dtype=np.int32)
         self.opponent_grid: np.ndarray = np.zeros((ROW, COL), dtype=np.int32)
-        self.prob: np.ndarray = np.full((ROW, COL), fill_value=INITIAL_SUBMARINE_COUNT / (ROW * COL), dtype=np.float64)
+        self.prob: np.ndarray = np.full((ROW, COL), fill_value=opponent_initial_submarine_count / (ROW * COL), dtype=np.float64)
         self.my_history: List[OpInfo] = list()
         self.opponent_history: List[OpInfo] = list()
         self.tracking_cell: Optional[Pos] = None
