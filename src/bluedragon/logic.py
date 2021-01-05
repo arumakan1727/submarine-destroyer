@@ -303,8 +303,8 @@ def initialize_my_placement(data: BattleData) -> None:
             [0, 0, 0, 0, 0],
             [0, X, 0, 0, X],
             [0, 0, 0, 0, 0],
-            [X, 0, 0, X, 0],
-            [0, 0, 0, 0, 0],
+            [X, 0, 0, 0, 0],
+            [0, 0, 0, X, 0],
         ],
 
         [
