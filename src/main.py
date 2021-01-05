@@ -30,9 +30,9 @@ def main(argv: List[str]):
     if should_show_my_positions:
         io.dump_my_grid(battle_data)
 
-    def my_turn():
+    def my_turn(cur_turn_count: int):
         # 自軍の操作を計算させて取得, 表示, battle_data に反映
-        op = logic.suggest_my_op(battle_data)
+        op = logic.suggest_my_op(battle_data, cur_turn_count)
 
         io.newline()
         io.success("自軍の操作: " + io.Color.yellow(op))
@@ -49,9 +49,9 @@ def main(argv: List[str]):
         # 攻撃対象のマス位置を更新 (明確な敵艦の位置がわからなければ None になる)
         logic.update_tracking_cell(battle_data)
 
-    def opponent_turn():
+    def opponent_turn(cur_turn_count: int):
         # 敵軍の操作を入力, 表示, battle_data に反映
-        op = io.read_opponent_op()
+        op = io.read_opponent_op(cur_turn_count)
         io.success("次の入力を受け取りました: " + io.Color.green(op))
         resp_from_me = logic.apply_opponent_op(battle_data, op)
 
@@ -71,10 +71,10 @@ def main(argv: List[str]):
         turn_count += 1
         if is_current_my_turn:
             print("\n---------------------- [Turn%02d] My turn ----------------------" % turn_count)
-            my_turn()
+            my_turn(turn_count)
         else:
             print("\n------------------- [Turn%02d] Opponent turn -------------------" % turn_count)
-            opponent_turn()
+            opponent_turn(turn_count)
 
         print("次へ進むにはEnterを押してください。", end='')
         input()

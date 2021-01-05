@@ -126,7 +126,7 @@ def update_tracking_cell(data: BattleData) -> None:
         _update_prob_for_my_attack_hit(data.prob, data.tracking_cell, data.opponent_alive_count)
 
 
-def suggest_my_op(data: BattleData) -> OpInfo:
+def suggest_my_op(data: BattleData, cur_turn_count: int) -> OpInfo:
     """
     対戦データをもとに自軍の操作を提案して返す。
     この関数は data に一切書込をしない。
@@ -145,7 +145,7 @@ def suggest_my_op(data: BattleData) -> OpInfo:
         attack_to = choice(list(candidates))
         io.info("初手 " + attack_to.code() + " への攻撃を選択しました")
         assert attack_to in attackable_cells
-        return OpInfo(AttackInfo(attack_pos=attack_to))
+        return OpInfo(AttackInfo(attack_pos=attack_to), turn_count=cur_turn_count)
 
     ######################################################################################################
     # 位置が明らかな敵艦があれば、そいつを攻撃し続けたい
@@ -166,7 +166,7 @@ def suggest_my_op(data: BattleData) -> OpInfo:
             attack_to = choice(list(candidates))
             assert attack_to in attackable_cells
             io.info("tracking_cell と 敵の移動情報に基づいて " + attack_to.code() + " の攻撃を選択しました")
-            return OpInfo(AttackInfo(attack_pos=attack_to))
+            return OpInfo(AttackInfo(attack_pos=attack_to), turn_count=cur_turn_count)
 
     ######################################################################################################
     # 攻撃可能かどうかを考慮しない確率最高値のマスを求める。
@@ -193,7 +193,8 @@ def suggest_my_op(data: BattleData) -> OpInfo:
                                abs(p.row + q.row) + abs(p.col + q.col)
                                for q in data.set_of_my_submarine_positions()))
                 io.info("確率最高セルと自軍がかぶっているので自軍を %s から %s へ移動させます" % (from_pos.code(), dest.code()))
-                return OpInfo(MoveInfo(fromPos=from_pos, dirY=dest.row - from_pos.row, dirX=dest.col - from_pos.col))
+                return OpInfo(MoveInfo(fromPos=from_pos, dirY=dest.row - from_pos.row, dirX=dest.col - from_pos.col),
+                              turn_count=cur_turn_count)
 
         # 確率最高マスへの距離が最も近い艦を動かす
         actor: Pos = min(data.set_of_my_submarine_positions(),
@@ -205,7 +206,8 @@ def suggest_my_op(data: BattleData) -> OpInfo:
                        999 if (p == true_highest_prob_cell)
                        else abs(true_highest_prob_cell.row - p.row) + abs(true_highest_prob_cell.col - p.col)))
         io.info("確率最高セルへ向けて自軍を %s から %s へ移動させます" % (actor.code(), dest.code()))
-        return OpInfo(MoveInfo(fromPos=actor, dirY=dest.row - actor.row, dirX=dest.col - actor.col))
+        return OpInfo(MoveInfo(fromPos=actor, dirY=dest.row - actor.row, dirX=dest.col - actor.col),
+                      turn_count=cur_turn_count)
 
     if ((last_opponent_op is not None)
             and last_opponent_op.is_attack()
@@ -221,7 +223,7 @@ def suggest_my_op(data: BattleData) -> OpInfo:
                 io.info("「攻撃を食らっているマスの周囲 && 攻撃可能マス の中で最高確率のマス」の確率が ゼロ なので攻撃しません。")
             else:
                 io.info("「攻撃を食らっているマスの周囲 && 攻撃可能マス の中で最高確率のマス」である %s を攻撃します。" % dest.code())
-                return OpInfo(AttackInfo(attack_pos=dest))
+                return OpInfo(AttackInfo(attack_pos=dest), turn_count=cur_turn_count)
 
     ######################################################################################################
     # 攻撃可能なマスの中で確率最高値のマスを求める。
@@ -236,7 +238,7 @@ def suggest_my_op(data: BattleData) -> OpInfo:
         io.info("確率値がしきい値 %g より高いので %s を攻撃します" %
                 (probability_threshold_high, attackable_highest_prob_cell.code()))
         assert attackable_highest_prob_cell in attackable_cells
-        return OpInfo(AttackInfo(attack_pos=attackable_highest_prob_cell))
+        return OpInfo(AttackInfo(attack_pos=attackable_highest_prob_cell), turn_count=cur_turn_count)
 
     ######################################################################################################
     # 敵の攻撃位置を遡り、その攻撃位置へ移動可能なら移動する
@@ -259,7 +261,7 @@ def suggest_my_op(data: BattleData) -> OpInfo:
             dirX = attacked_pos.col - actor.col
             assert (abs(dirY) + abs(dirX)) in (1, 2)
             assert dirY == 0 or dirX == 0
-            return OpInfo(MoveInfo(fromPos=actor, dirY=dirY, dirX=dirX))
+            return OpInfo(MoveInfo(fromPos=actor, dirY=dirY, dirX=dirX), turn_count=cur_turn_count)
 
     # 自軍の数が2以下の場合は50%の確率でランダムに移動
     if data.my_alive_count <= 2 and randint(0, 99) < 50:
@@ -267,11 +269,12 @@ def suggest_my_op(data: BattleData) -> OpInfo:
         dest = choice(list(data.set_of_my_movable_cells(actor)))
         io.info("確率が高いマスが見当たらず自軍の数が2以下の場合は5割の確率でランダムに移動します...選ばれたのは移動でした (%s -> %s)。" %
                 (actor.code(), dest.code()))
-        return OpInfo(MoveInfo(fromPos=actor, dirY=dest.row - actor.row, dirX=dest.col - actor.col))
+        return OpInfo(MoveInfo(fromPos=actor, dirY=dest.row - actor.row, dirX=dest.col - actor.col),
+                      turn_count=cur_turn_count)
 
     io.info("しきい値より高くはないもののこれ以外に行動パターンが無いので最高確率値のマス %s に攻撃します" %
             attackable_highest_prob_cell.code())
-    return OpInfo(AttackInfo(attack_pos=attackable_highest_prob_cell))
+    return OpInfo(AttackInfo(attack_pos=attackable_highest_prob_cell), turn_count=cur_turn_count)
 
 
 def initialize_my_placement(data: BattleData) -> None:

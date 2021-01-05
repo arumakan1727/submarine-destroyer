@@ -50,6 +50,7 @@ class OpInfo(NamedTuple):
     OpInfo(AttackInfo(...)) または OpInfo(MoveInfo(...)) のようにして生成する
     """
     detail: Union[AttackInfo, MoveInfo]
+    turn_count: int
 
     def is_attack(self) -> bool:
         return isinstance(self.detail, AttackInfo)
@@ -59,14 +60,15 @@ class OpInfo(NamedTuple):
 
     def __str__(self) -> str:
         if self.is_attack():
-            return "Attack(to: %s)" % self.detail.attack_pos.code()
+            return "Attack(to: %s) [turn%02d]" % (self.detail.attack_pos.code(), self.turn_count)
 
         if self.is_move():
             info = self.detail
-            return "Move(from: %s, dir: %s, dist: %d)" % (
+            return "Move(from: %s, dir: %s, dist: %d) [turn%02d]" % (
                 info.fromPos.code() if info.fromPos is not None else "None",
                 info.dir_str(),
-                info.moving_distance())
+                info.moving_distance(),
+                self.turn_count)
 
         raise Exception("type of `detail` is illegal")
 

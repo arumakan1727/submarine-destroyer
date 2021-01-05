@@ -145,18 +145,18 @@ class TestUpdateProb(TestCase):
         # 各要素: (current_tracking_cell, last_my_op, last_opponent_op, expected_tracking_cell)
         p0 = Pos(0, 0)
         p1 = Pos(0, 2)  # p1 から右へ 2 マス
-        move_right = OpInfo(MoveInfo(None, dirY=0, dirX=2))
+        move_right = OpInfo(MoveInfo(None, dirY=0, dirX=2), turn_count=1)
 
-        attack = OpInfo(AttackInfo(attack_pos=p1, resp=None))
-        attack_moved_hit = OpInfo(AttackInfo(attack_pos=p1, resp=Response.Hit))
-        attack_moved_dead = OpInfo(AttackInfo(attack_pos=p1, resp=Response.Dead))
-        attack_moved_near = OpInfo(AttackInfo(attack_pos=p1, resp=Response.Near))
-        attack_moved_nothing = OpInfo(AttackInfo(attack_pos=p1, resp=Response.Nothing))
+        attack = OpInfo(AttackInfo(attack_pos=p1, resp=None), turn_count=1)
+        attack_moved_hit = OpInfo(AttackInfo(attack_pos=p1, resp=Response.Hit), turn_count=2)
+        attack_moved_dead = OpInfo(AttackInfo(attack_pos=p1, resp=Response.Dead), turn_count=2)
+        attack_moved_near = OpInfo(AttackInfo(attack_pos=p1, resp=Response.Near), turn_count=2)
+        attack_moved_nothing = OpInfo(AttackInfo(attack_pos=p1, resp=Response.Nothing), turn_count=2)
 
-        attack_non_moved_hit = OpInfo(AttackInfo(attack_pos=p0, resp=Response.Hit))
-        attack_non_moved_dead = OpInfo(AttackInfo(attack_pos=p0, resp=Response.Dead))
-        attack_non_moved_near = OpInfo(AttackInfo(attack_pos=p0, resp=Response.Near))
-        attack_non_moved_nothing = OpInfo(AttackInfo(attack_pos=p0, resp=Response.Nothing))
+        attack_non_moved_hit = OpInfo(AttackInfo(attack_pos=p0, resp=Response.Hit), turn_count=2)
+        attack_non_moved_dead = OpInfo(AttackInfo(attack_pos=p0, resp=Response.Dead), turn_count=2)
+        attack_non_moved_near = OpInfo(AttackInfo(attack_pos=p0, resp=Response.Near), turn_count=2)
+        attack_non_moved_nothing = OpInfo(AttackInfo(attack_pos=p0, resp=Response.Nothing), turn_count=2)
 
         testcases = [
             (p0, move_right, move_right, None),
