@@ -113,12 +113,12 @@ class BattleData:
         敵の移動情報 と 移動後に攻撃が当たったかどうか によって変動する。見失った場合は None になる。
     """
 
-    def __init__(self):
+    def __init__(self, opponent_initial_submarine_count: int):
         self.my_alive_count: int = INITIAL_SUBMARINE_COUNT
-        self.opponent_alive_count: int = INITIAL_SUBMARINE_COUNT
+        self.opponent_alive_count: int = opponent_initial_submarine_count
         self.my_grid: np.ndarray = np.zeros((ROW, COL), dtype=np.int32)
         self.opponent_grid: np.ndarray = np.zeros((ROW, COL), dtype=np.int32)
-        self.prob: np.ndarray = np.full((ROW, COL), fill_value=INITIAL_SUBMARINE_COUNT / (ROW * COL), dtype=np.float64)
+        self.prob: np.ndarray = np.full((ROW, COL), fill_value=opponent_initial_submarine_count / (ROW * COL), dtype=np.float64)
         self.my_history: List[OpInfo] = list()
         self.opponent_history: List[OpInfo] = list()
         self.tracking_cell: Optional[Pos] = None

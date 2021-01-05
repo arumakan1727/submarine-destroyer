@@ -18,12 +18,29 @@ def main(argv: List[str]):
         io.info("Hint: `-q` オプションをつけて実行すると自軍の配置の表示を抑制できます。")
         should_show_my_positions = True
 
+    if "-n" in argv:
+        i = argv.index("-n") + 1
+        if i >= len(argv) or not argv[i].isdigit():
+            io.newline()
+            io.fail("`-n` オプションが指定されましたが敵艦の初期個数が指定されていません")
+            io.info("Usage: `-n <integer>`")
+            sys.exit(1)
+
+        opponent_initial_submarine_count = int(argv[i])
+        io.newline()
+        io.success("`-n` オプションが指定され、敵艦の初期個数が %d に設定されました。" % opponent_initial_submarine_count)
+    else:
+        io.newline()
+        io.info("`-n <integer>` をつけて実行すると敵艦の初期個数を指定できます。")
+        io.info("敵艦の初期個数が指定されていないのでデフォルト値である 4 に設定します。")
+        opponent_initial_submarine_count = 4
+
     # 初手・後手の入力
     io.newline()
     is_me_first = io.ask_yesno("私達のチームが先手ですか？ [y/n]: ")
 
     # 対戦データの初期化
-    battle_data = model.BattleData()
+    battle_data = model.BattleData(opponent_initial_submarine_count)
     logic.initialize_my_placement(battle_data)
 
     # 初期配置の表示
