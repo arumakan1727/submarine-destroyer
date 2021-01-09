@@ -118,7 +118,8 @@ class BattleData:
         self.opponent_alive_count: int = opponent_initial_submarine_count
         self.my_grid: np.ndarray = np.zeros((ROW, COL), dtype=np.int32)
         self.opponent_grid: np.ndarray = np.zeros((ROW, COL), dtype=np.int32)
-        self.prob: np.ndarray = np.full((ROW, COL), fill_value=opponent_initial_submarine_count / (ROW * COL), dtype=np.float64)
+        self.prob: np.ndarray = np.full((ROW, COL), fill_value=opponent_initial_submarine_count / (ROW * COL),
+                                        dtype=np.float64)
         self.my_history: List[OpInfo] = list()
         self.opponent_history: List[OpInfo] = list()
         self.tracking_cell: Optional[Pos] = None
