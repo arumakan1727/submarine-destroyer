@@ -1,4 +1,5 @@
 import math
+from logging import getLogger
 from random import randint, choice
 from typing import List, Optional, Set
 
@@ -9,6 +10,8 @@ from .model import OpInfo, AttackInfo, Response, BattleData, MoveInfo
 from .rule import Pos
 from .rule import ROW, COL, INITIAL_HP, INITIAL_SUBMARINE_COUNT
 from .rule import set_of_around_cells, all_cell_set, is_within_area
+
+thisFileLogger = getLogger(__name__)
 
 
 def apply_my_op(data: BattleData, op_info: OpInfo) -> None:
@@ -110,11 +113,11 @@ def update_tracking_cell(data: BattleData) -> None:
             dirX = last_opponent_op.detail.dirX
             data.tracking_cell = Pos(sy + dirY, sx + dirX)
             io.info("敵の位置が明らか かつ 敵が1艦しかいない 状態で敵が移動しました。 tracking_cell を移動先の %s にします。" %
-                    data.tracking_cell.code())
+                    data.tracking_cell.code(), thisFileLogger)
             return
         else:
             io.info("敵の位置が明らか かつ 敵が1艦しかいない 状態で敵は移動していません。 tracking_cell はそのまま %s を維持します。" %
-                    data.tracking_cell.code())
+                    data.tracking_cell.code(), thisFileLogger)
             return
 
     data.tracking_cell = _calculate_next_tracking_cell(
@@ -143,7 +146,7 @@ def suggest_my_op(data: BattleData, cur_turn_count: int) -> OpInfo:
         # 攻撃先候補 と attackable_cells の積集合をとって確実に攻撃可能な位置を得る。
         candidates = set(Pos(y, x) for y in range(1, ROW - 1) for x in range(1, COL - 1)) & attackable_cells
         attack_to = choice(list(candidates))
-        io.info("初手 " + attack_to.code() + " への攻撃を選択しました")
+        io.info("初手 " + attack_to.code() + " への攻撃を選択しました", thisFileLogger)
         assert attack_to in attackable_cells
         return OpInfo(AttackInfo(attack_pos=attack_to), turn_count=cur_turn_count)
 
@@ -165,7 +168,7 @@ def suggest_my_op(data: BattleData, cur_turn_count: int) -> OpInfo:
         if len(candidates) > 0:
             attack_to = choice(list(candidates))
             assert attack_to in attackable_cells
-            io.info("tracking_cell と 敵の移動情報に基づいて " + attack_to.code() + " の攻撃を選択しました")
+            io.info("tracking_cell と 敵の移動情報に基づいて " + attack_to.code() + " の攻撃を選択しました", thisFileLogger)
             return OpInfo(AttackInfo(attack_pos=attack_to), turn_count=cur_turn_count)
 
     ######################################################################################################
@@ -173,7 +176,7 @@ def suggest_my_op(data: BattleData, cur_turn_count: int) -> OpInfo:
     true_highest_prob_cell: Pos = max(all_cell_set(), key=lambda p: data.prob[p.row, p.col])
     true_highest_prob_value = data.prob[true_highest_prob_cell.row, true_highest_prob_cell.col]
     io.info("攻撃可能とは限らないマスの中で確率最高値のマスは %s (確率 %g) です" %
-            (true_highest_prob_cell.code(), true_highest_prob_value))
+            (true_highest_prob_cell.code(), true_highest_prob_value), thisFileLogger)
 
     # 確率最高値のマスの確率がかなり高く、それにもかかわらず自軍の射程にない場合は自軍をその方角へ移動させる
     probability_threshold_high = (data.opponent_alive_count * 0.1)
@@ -192,7 +195,7 @@ def suggest_my_op(data: BattleData, cur_turn_count: int) -> OpInfo:
                            key=lambda p: sum(
                                abs(p.row + q.row) + abs(p.col + q.col)
                                for q in data.set_of_my_submarine_positions()))
-                io.info("確率最高セルと自軍がかぶっているので自軍を %s から %s へ移動させます" % (from_pos.code(), dest.code()))
+                io.info("確率最高セルと自軍がかぶっているので自軍を %s から %s へ移動させます" % (from_pos.code(), dest.code()), thisFileLogger)
                 return OpInfo(MoveInfo(fromPos=from_pos, dirY=dest.row - from_pos.row, dirX=dest.col - from_pos.col),
                               turn_count=cur_turn_count)
 
@@ -205,7 +208,7 @@ def suggest_my_op(data: BattleData, cur_turn_count: int) -> OpInfo:
                    key=lambda p: (
                        999 if (p == true_highest_prob_cell)
                        else abs(true_highest_prob_cell.row - p.row) + abs(true_highest_prob_cell.col - p.col)))
-        io.info("確率最高セルへ向けて自軍を %s から %s へ移動させます" % (actor.code(), dest.code()))
+        io.info("確率最高セルへ向けて自軍を %s から %s へ移動させます" % (actor.code(), dest.code()), thisFileLogger)
         return OpInfo(MoveInfo(fromPos=actor, dirY=dest.row - actor.row, dirX=dest.col - actor.col),
                       turn_count=cur_turn_count)
 
@@ -213,16 +216,16 @@ def suggest_my_op(data: BattleData, cur_turn_count: int) -> OpInfo:
             and last_opponent_op.is_attack()
             and last_opponent_op.detail.resp in (Response.Hit, Response.Dead)):
         attacked_pos = last_opponent_op.detail.attack_pos
-        io.info("敵の攻撃が命中しているので、攻撃を食らっているマス %s の周囲かつ攻撃可能マスで最も確率が高いマスを求めます。" % attacked_pos.code())
+        io.info("敵の攻撃が命中しているので、攻撃を食らっているマス %s の周囲かつ攻撃可能マスで最も確率が高いマスを求めます。" % attacked_pos.code(), thisFileLogger)
         candidates = set_of_around_cells(attacked_pos) & attackable_cells
         if len(candidates) <= 0:
-            io.info("攻撃を食らっているマスの周囲に攻撃可能なマスはありませんでした。")
+            io.info("攻撃を食らっているマスの周囲に攻撃可能なマスはありませんでした。", thisFileLogger)
         else:
             dest = max(candidates, key=lambda p: data.prob[p.row, p.col])
             if math.isclose(0, data.prob[dest.row, dest.col], abs_tol=1e-7):
-                io.info("「攻撃を食らっているマスの周囲 && 攻撃可能マス の中で最高確率のマス」の確率が ゼロ なので攻撃しません。")
+                io.info("「攻撃を食らっているマスの周囲 && 攻撃可能マス の中で最高確率のマス」の確率が ゼロ なので攻撃しません。", thisFileLogger)
             else:
-                io.info("「攻撃を食らっているマスの周囲 && 攻撃可能マス の中で最高確率のマス」である %s を攻撃します。" % dest.code())
+                io.info("「攻撃を食らっているマスの周囲 && 攻撃可能マス の中で最高確率のマス」である %s を攻撃します。" % dest.code(), thisFileLogger)
                 return OpInfo(AttackInfo(attack_pos=dest), turn_count=cur_turn_count)
 
     ######################################################################################################
@@ -230,13 +233,13 @@ def suggest_my_op(data: BattleData, cur_turn_count: int) -> OpInfo:
     attackable_highest_prob_cell: Pos = max(attackable_cells, key=lambda p: data.prob[p.row, p.col])
     attackable_highest_prob_value = data.prob[attackable_highest_prob_cell.row, attackable_highest_prob_cell.col]
     io.info("攻撃可能なマスの中で確率最高値のマスは %s (確率 %g) です" %
-            (attackable_highest_prob_cell.code(), attackable_highest_prob_value))
+            (attackable_highest_prob_cell.code(), attackable_highest_prob_value), thisFileLogger)
 
     # 最高確率値がしきい値より確率が高ければ攻撃する
     probability_threshold_high = (data.opponent_alive_count * 0.1)
     if attackable_highest_prob_value > probability_threshold_high:
         io.info("確率値がしきい値 %g より高いので %s を攻撃します" %
-                (probability_threshold_high, attackable_highest_prob_cell.code()))
+                (probability_threshold_high, attackable_highest_prob_cell.code()), thisFileLogger)
         assert attackable_highest_prob_cell in attackable_cells
         return OpInfo(AttackInfo(attack_pos=attackable_highest_prob_cell), turn_count=cur_turn_count)
 
@@ -256,7 +259,7 @@ def suggest_my_op(data: BattleData, cur_turn_count: int) -> OpInfo:
         # 敵が攻撃した位置へ移動可能な自軍の潜水艦のうち、攻撃可能範囲の個数が一番小さい艦を移動させる
         if len(my_movable_submarines) > 0:
             actor: Pos = min(my_movable_submarines, key=lambda p: len(set_of_around_cells(p)))
-            io.info("%s に位置する自軍の艦を、過去に敵が攻撃した位置 %s へ移動させます" % (actor.code(), attacked_pos.code()))
+            io.info("%s に位置する自軍の艦を、過去に敵が攻撃した位置 %s へ移動させます" % (actor.code(), attacked_pos.code()), thisFileLogger)
             dirY = attacked_pos.row - actor.row
             dirX = attacked_pos.col - actor.col
             assert (abs(dirY) + abs(dirX)) in (1, 2)
@@ -268,12 +271,12 @@ def suggest_my_op(data: BattleData, cur_turn_count: int) -> OpInfo:
         actor = choice(list(data.set_of_my_submarine_positions()))
         dest = choice(list(data.set_of_my_movable_cells(actor)))
         io.info("確率が高いマスが見当たらず自軍の数が2以下の場合は5割の確率でランダムに移動します...選ばれたのは移動でした (%s -> %s)。" %
-                (actor.code(), dest.code()))
+                (actor.code(), dest.code()), thisFileLogger)
         return OpInfo(MoveInfo(fromPos=actor, dirY=dest.row - actor.row, dirX=dest.col - actor.col),
                       turn_count=cur_turn_count)
 
     io.info("しきい値より高くはないもののこれ以外に行動パターンが無いので最高確率値のマス %s に攻撃します" %
-            attackable_highest_prob_cell.code())
+            attackable_highest_prob_cell.code(), thisFileLogger)
     return OpInfo(AttackInfo(attack_pos=attackable_highest_prob_cell), turn_count=cur_turn_count)
 
 
@@ -326,15 +329,15 @@ def initialize_my_placement(data: BattleData) -> None:
                 hp_sum += cell
         assert hp_sum == (INITIAL_HP * INITIAL_SUBMARINE_COUNT)
 
-    io.info("%d 個の初期配置候補を validate しています..." % len(candidates))
+    io.info("%d 個の初期配置候補を validate しています..." % len(candidates), thisFileLogger)
     for mat in candidates:
         validate(mat)
-    io.success("どの初期配置候補も不正はありませんでした。")
+    io.success("どの初期配置候補も不正はありませんでした。", thisFileLogger)
 
     # TODO selectID は乱数にするか定数にするか
     candidate_id = randint(0, len(candidates) - 1)
 
-    io.info("候補のうち %d 番目 (0-indexed) の初期配置を選択します。" % candidate_id)
+    io.info("候補のうち %d 番目 (0-indexed) の初期配置を選択します。" % candidate_id, thisFileLogger)
     data.my_grid = np.array(candidates[candidate_id])
 
 
@@ -520,7 +523,7 @@ def _calculate_next_tracking_cell(
     io.info("更新前の敵艦予想位置: %s, 自軍の直前の操作: %s, 敵の直前の操作: %s" %
             (current_tracking_cell.code() if (current_tracking_cell is not None) else "None",
              str(last_my_op),
-             str(last_opponent_op)))
+             str(last_opponent_op)), thisFileLogger)
 
     # 自軍の直前の操作が攻撃だった場合
     if last_my_op.is_attack():
@@ -529,13 +532,13 @@ def _calculate_next_tracking_cell(
 
         # 自軍の攻撃が当たって死んだ場合は、そのマスにはもう敵艦は存在しない。マーク位置の敵艦が消えた & 他の敵艦の位置は分からないので None。
         if response is Response.Dead:
-            io.info("自軍の攻撃が当たって消えたので tracking_cell を %s にします。" % None)
+            io.info("自軍の攻撃が当たって消えたので tracking_cell を %s にします。" % None, thisFileLogger)
             return None
 
         # 自軍の攻撃が当たってまだ生きている場合は、そのマスに敵艦が確実にいるのでマークする。
         if response is Response.Hit:
             io.info("自軍の攻撃が当たってまだ敵が生きているので tracking_cell を命中位置の %s にします。" %
-                    last_my_op.detail.attack_pos.code())
+                    last_my_op.detail.attack_pos.code(), thisFileLogger)
             return last_my_op.detail.attack_pos
 
         # 以下の流れで自軍の攻撃が当たらなかった場合 (response が Near または Nothing の場合)。
@@ -549,19 +552,19 @@ def _calculate_next_tracking_cell(
                 dirY = last_opponent_op.detail.dirY
                 dirX = last_opponent_op.detail.dirX
                 ret = Pos(y + dirY, x + dirX)
-                io.info("敵の移動に追従ぜず もとの位置に撃ったものの命中しませんでした。")
+                io.info("敵の移動に追従ぜず もとの位置に撃ったものの命中しませんでした。", thisFileLogger)
                 io.info("敵の移動はフェイントではなかったので tracking_cell を敵の移動に従って %s -> %s にします。" %
-                        (current_tracking_cell.code(), ret.code()))
+                        (current_tracking_cell.code(), ret.code()), thisFileLogger)
                 return ret
             # 自軍は敵の移動に追従して撃ったが、当たらなかったので敵の移動はフェイントだった。もとの位置に敵艦が確実にいる。
             else:
-                io.info("敵の移動に追従して 移動先に撃ったものの命中しませんでした。")
-                io.info("敵の移動はフェイントだったので tracking_cell をもとの位置 %s にします。" % current_tracking_cell.code())
+                io.info("敵の移動に追従して 移動先に撃ったものの命中しませんでした。", thisFileLogger)
+                io.info("敵の移動はフェイントだったので tracking_cell をもとの位置 %s にします。" % current_tracking_cell.code(), thisFileLogger)
                 return current_tracking_cell
 
         # 自軍の攻撃が当たらなかったけど敵の位置が明らかで移動していないならもとのマーク位置をそのまま返す。
         if (current_tracking_cell is not None) and (last_opponent_op is not None) and (not last_opponent_op.is_move()):
-            io.info("自軍の攻撃は当たらなかったものの直前の敵の位置が明らかで敵は移動していないので、 tracking_cell は維持します。")
+            io.info("自軍の攻撃は当たらなかったものの直前の敵の位置が明らかで敵は移動していないので、 tracking_cell は維持します。", thisFileLogger)
             return current_tracking_cell
 
         # 敵艦の確実な位置がわからないので None
