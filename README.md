@@ -1,5 +1,8 @@
 # submarine-destroyer
 
+![Screenshot from 2021-01-19 00-21-34](https://user-images.githubusercontent.com/33191176/104933535-636a5900-59ec-11eb-8d55-eef83d216c4c.png)
+
+
 ## 実行方法
 ```console
 $ cd src/
